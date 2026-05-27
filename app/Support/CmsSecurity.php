@@ -400,7 +400,7 @@ class CmsSecurity
         ], true) ? ($parsed['referrerpolicy'] ?? 'no-referrer-when-downgrade') : 'no-referrer-when-downgrade';
 
         return sprintf(
-            '<iframe src="%s" width="%s" height="%s" style="border:0;" allowfullscreen="" loading="%s" referrerpolicy="%s"></iframe>',
+            '<iframe src="%s" width="%s" height="%s" allowfullscreen="" loading="%s" referrerpolicy="%s"></iframe>',
             e($src),
             e((string) $width),
             e((string) $height),

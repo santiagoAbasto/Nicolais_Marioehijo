@@ -111,7 +111,7 @@
 
                 <form class="contact-form" action="{{ route('web.contact.store') }}" method="POST">
                     @csrf
-                    <input type="text" name="{{ config('security.forms.honeypot_field', 'website') }}" value="" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
+                    <input class="nm-honeypot-field" type="text" name="{{ config('security.forms.honeypot_field', 'website') }}" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
                     <input type="hidden" name="_form_started_at" value="{{ time() }}">
                     @if ($product)
                         <input type="hidden" name="product_slug" value="{{ $product->slug }}">

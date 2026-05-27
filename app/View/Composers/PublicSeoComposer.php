@@ -198,14 +198,13 @@ class PublicSeoComposer
         return max(array_map(
             static fn (string $path): int => @filemtime(public_path($path)) ?: 0,
             [
-                'favicon.ico',
-                'favicon.svg',
-                'favicon-96x96.png',
-                'favicon-192x192.png',
-                'favicon-512x512.png',
-                'apple-touch-icon.png',
-                'apple-touch-icon-precomposed.png',
-                'site.webmanifest',
+                'favicon/favicon.ico',
+                'favicon/favicon.svg',
+                'favicon/favicon-96x96.png',
+                'favicon/web-app-manifest-192x192.png',
+                'favicon/web-app-manifest-512x512.png',
+                'favicon/apple-touch-icon.png',
+                'favicon/site.webmanifest',
             ],
         )) ?: '1';
     }

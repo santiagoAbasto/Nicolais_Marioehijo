@@ -22,8 +22,9 @@
                 <section class="catalog-grid" aria-label="Catálogos disponibles">
                     @foreach($catalogItems as $catalogItem)
                         <article class="catalog-card">
-                            <div class="catalog-card__media" @if($catalogItem['cover_url']) style="--catalog-cover: url('{{ $catalogItem['cover_url'] }}');" @endif>
+                            <div class="catalog-card__media">
                                 @if($catalogItem['cover_url'])
+                                    <img class="catalog-card__cover" src="{{ $catalogItem['cover_url'] }}" alt="" loading="lazy" decoding="async">
                                     <span class="catalog-card__media-alt">{{ $catalogItem['title'] }}</span>
                                 @endif
                             </div>

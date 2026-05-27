@@ -398,7 +398,7 @@
                 <h2 id="footer-newsletter-title" class="nm-site-footer__title">Suscribite al Newsletter</h2>
                 <form id="newsletterForm" class="nm-site-footer__newsletter-form" action="{{ route('web.newsletter.store') }}" method="POST">
                     @csrf
-                    <input type="text" name="{{ config('security.forms.honeypot_field', 'website') }}" value="" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
+                    <input class="nm-honeypot-field" type="text" name="{{ config('security.forms.honeypot_field', 'website') }}" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
                     <input type="hidden" name="_form_started_at" value="{{ time() }}">
                     <label class="sr-only" for="footer-newsletter-email">Email</label>
                     <input id="footer-newsletter-email" type="email" name="email" placeholder="Email" autocomplete="email" required>

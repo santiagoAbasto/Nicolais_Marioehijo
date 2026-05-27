@@ -49,11 +49,19 @@
 }
 
 .catalog-card__media {
+    position: relative;
     width: 183px;
     height: 247px;
     overflow: hidden;
     border-radius: 8px 0 0 8px;
-    background: var(--catalog-cover, lightgray) lightgray -7.969px -8.271px / 108.709% 106.582% no-repeat;
+    background: lightgray;
+}
+
+.catalog-card__cover {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .catalog-card__media-alt {

@@ -467,6 +467,15 @@ body.client-access-open {
     position: absolute;
 }
 
+.nm-honeypot-field {
+    position: absolute;
+    left: -9999px;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
 @media (max-width: 768px) {
     .client-access-modal {
         align-items: center;
