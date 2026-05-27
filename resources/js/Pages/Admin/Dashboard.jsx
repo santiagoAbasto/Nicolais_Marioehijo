@@ -93,6 +93,7 @@ function formatDate(value) {
     if (Number.isNaN(date.getTime())) return "Sin señal todavía";
 
     return date.toLocaleString("es-AR", {
+        timeZone: "America/Argentina/Buenos_Aires",
         day: "2-digit",
         month: "short",
         hour: "2-digit",
@@ -858,7 +859,7 @@ function DashboardExperience({ stats = {}, pending = [], modules = [], analytics
 
                         <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
                             <div className={`rounded-[24px] border p-4 ${dark ? "border-white/10 bg-black/20" : "border-slate-200 bg-white/70"}`}>
-                                <p className={`text-xs font-bold uppercase tracking-[0.16em] ${dark ? "text-slate-400" : "text-slate-500"}`}>Última señal</p>
+                                <p className={`text-xs font-bold uppercase tracking-[0.16em] ${dark ? "text-slate-400" : "text-slate-500"}`}>Última señal · Hora Argentina</p>
                                 <p className={`mt-2 text-lg font-semibold ${dark ? "text-white" : "text-slate-950"}`}>{formatDate(data.last_recorded_at)}</p>
                             </div>
                             <div className={`rounded-[24px] border p-4 ${dark ? "border-white/10 bg-black/20" : "border-slate-200 bg-white/70"}`}>

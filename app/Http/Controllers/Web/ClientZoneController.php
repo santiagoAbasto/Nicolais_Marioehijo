@@ -963,7 +963,9 @@ class ClientZoneController extends Controller
 
     private function nextOrderNumber(): string
     {
-        $nextId = ((int) ClientOrder::query()->where('document_type', ClientOrder::TYPE_ORDER)->max('id')) + 1;
+        $nextId = ((int) ClientOrder::query()
+            ->where('document_type', ClientOrder::TYPE_ORDER)
+            ->max('order_number')) + 1;
 
         return str_pad((string) $nextId, 7, '0', STR_PAD_LEFT);
     }

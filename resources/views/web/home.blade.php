@@ -70,7 +70,46 @@
                     </svg>
                     Clientes
                 </button>
+
+                <button
+                    type="button"
+                    class="nm-mobile-menu-toggle"
+                    data-home-menu-toggle
+                    aria-label="Abrir menú"
+                    aria-controls="home-mobile-nav"
+                    aria-expanded="false"
+                >
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </button>
             </header>
+
+            <nav class="nm-mobile-nav" id="home-mobile-nav" data-home-mobile-menu aria-label="Menú principal" hidden>
+                <button class="nm-mobile-nav__backdrop" type="button" data-home-menu-close aria-label="Cerrar menú"></button>
+                <div class="nm-mobile-nav__panel" data-home-mobile-menu-panel>
+                    <div class="nm-mobile-nav__head">
+                        <a href="{{ route('web.home') }}" class="nm-mobile-nav__logo" aria-label="{{ config('app.name', 'Nicolais Mario e Hijo') }}">
+                            <img src="{{ asset('storage/brand/logo.svg') }}" alt="Nicolais Mario e Hijo">
+                        </a>
+                        <button class="nm-mobile-nav__close" type="button" data-home-menu-close aria-label="Cerrar menú">
+                            <span aria-hidden="true"></span>
+                            <span aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <a href="/nosotros">Nosotros</a>
+                    <a href="/productos">Productos</a>
+                    <a href="/catalogo">Catálogos</a>
+                    <a href="/novedades">Novedades</a>
+                    <a href="/contacto">Contacto</a>
+                    <button type="button" class="nm-mobile-nav__client" data-client-modal-open>
+                        <svg class="nm-client-button__icon" xmlns="http://www.w3.org/2000/svg" width="14" height="18" viewBox="0 0 14 18" fill="none" aria-hidden="true">
+                            <path d="M1.75 18C1.26875 18 0.856916 17.8323 0.5145 17.4969C0.172083 17.1614 0.000583333 16.7577 0 16.2857V7.71429C0 7.24286 0.1715 6.83943 0.5145 6.504C0.8575 6.16857 1.26933 6.00057 1.75 6H2.625V4.28571C2.625 3.1 3.05171 2.08943 3.90512 1.254C4.75854 0.418572 5.79017 0.000572014 7 5.8508e-07C8.20983 -0.000570843 9.24175 0.417429 10.0957 1.254C10.9497 2.09057 11.3762 3.10114 11.375 4.28571V6H12.25C12.7312 6 13.1434 6.168 13.4864 6.504C13.8294 6.84 14.0006 7.24343 14 7.71429V16.2857C14 16.7571 13.8288 17.1609 13.4864 17.4969C13.144 17.8329 12.7318 18.0006 12.25 18H1.75ZM1.75 16.2857H12.25V7.71429H1.75V16.2857ZM7 13.7143C7.48125 13.7143 7.89337 13.5466 8.23637 13.2111C8.57937 12.8757 8.75058 12.472 8.75 12C8.74942 11.528 8.57821 11.1246 8.23637 10.7897C7.89454 10.4549 7.48242 10.2869 7 10.2857C6.51758 10.2846 6.10575 10.4526 5.7645 10.7897C5.42325 11.1269 5.25175 11.5303 5.25 12C5.24825 12.4697 5.41975 12.8734 5.7645 13.2111C6.10925 13.5489 6.52108 13.7166 7 13.7143ZM4.375 6H9.625V4.28571C9.625 3.57143 9.36979 2.96429 8.85937 2.46429C8.34896 1.96429 7.72917 1.71429 7 1.71429C6.27083 1.71429 5.65104 1.96429 5.14062 2.46429C4.63021 2.96429 4.375 3.57143 4.375 4.28571V6Z" fill="currentColor"/>
+                        </svg>
+                        Clientes
+                    </button>
+                </div>
+            </nav>
 
             <div class="nm-hero__content">
                 <h1>{{ $title }}</h1>

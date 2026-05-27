@@ -269,42 +269,249 @@
     border: 0;
 }
 
-@media (max-width: 900px) {
-    .contact-product__head {
+@media (max-width: 1024px) {
+    body:has(.contact-page) .contact-shell {
+        width: min(1224px, calc(100% - 40px));
+        padding-top: 24px;
+        padding-bottom: 92px;
+    }
+
+    body:has(.contact-page) .contact-breadcrumb {
+        margin-bottom: 32px;
+    }
+
+    body:has(.contact-page--has-product) .contact-breadcrumb {
+        margin-bottom: 36px;
+    }
+
+    body:has(.contact-page) .contact-product {
+        width: 100%;
+        margin-bottom: 42px;
+    }
+
+    body:has(.contact-page) .contact-product__head,
+    body:has(.contact-page) .contact-product__row {
+        width: 100%;
+        grid-template-columns: 112px 116px 112px minmax(220px, 1fr) 160px;
+    }
+
+    body:has(.contact-page) .contact-product__head span:last-child,
+    body:has(.contact-page) .contact-product__row span:last-child {
+        padding-left: 20px;
+    }
+
+    body:has(.contact-page) .contact-product__row span:nth-of-type(3) {
+        padding-right: 20px;
+    }
+
+    body:has(.contact-page) .contact-info-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    body:has(.contact-page) .contact-info-card {
+        padding: 20px;
+    }
+
+    body:has(.contact-page) .contact-consult {
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 36px;
+    }
+
+    body:has(.contact-page) .contact-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 20px;
+    }
+
+    body:has(.contact-page) .contact-form__field input,
+    body:has(.contact-page) .contact-form__field textarea {
+        width: 100%;
+    }
+
+    body:has(.contact-page) .contact-map {
+        width: 100%;
+        height: 440px;
+        aspect-ratio: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    body:has(.contact-page) .contact-shell {
+        width: calc(100% - 40px);
+        padding-top: 22px;
+        padding-bottom: 76px;
+    }
+
+    body:has(.contact-page) .contact-breadcrumb,
+    body:has(.contact-page--has-product) .contact-breadcrumb {
+        margin-bottom: 24px;
+    }
+
+    body:has(.contact-page) .contact-product {
+        margin-bottom: 32px;
+    }
+
+    body:has(.contact-page) .contact-product__head {
         display: none;
     }
 
-    .contact-product__row {
+    body:has(.contact-page) .contact-product__row {
+        width: 100%;
+        height: auto;
         grid-template-columns: 82px minmax(0, 1fr);
         gap: 12px;
         padding: 12px 0;
     }
 
-    .contact-product__row span {
-        grid-column: 2;
+    body:has(.contact-page) .contact-product__row img {
+        grid-row: 1 / span 4;
+        margin-left: 0;
     }
 
-    .contact-info-grid,
-    .contact-consult,
-    .contact-form {
+    body:has(.contact-page) .contact-product__row span {
+        grid-column: 2;
+        min-width: 0;
+        padding: 0;
+        overflow-wrap: anywhere;
+    }
+
+    body:has(.contact-page) .contact-info-grid,
+    body:has(.contact-page) .contact-consult,
+    body:has(.contact-page) .contact-form {
         grid-template-columns: 1fr;
     }
 
-    .contact-form__field input,
-    .contact-form__field textarea {
+    body:has(.contact-page) .contact-info-grid {
+        gap: 16px;
+        margin-bottom: 36px;
+    }
+
+    body:has(.contact-page) .contact-info-card {
+        min-height: 0;
+    }
+
+    body:has(.contact-page) .contact-consult {
+        gap: 32px;
+        margin-bottom: 42px;
+    }
+
+    body:has(.contact-page) .contact-details {
+        gap: 16px;
+    }
+
+    body:has(.contact-page) .contact-form {
+        row-gap: 18px;
+    }
+
+    body:has(.contact-page) .contact-form__field input,
+    body:has(.contact-page) .contact-form__field textarea {
         width: 100%;
     }
 
-    .contact-form__field--message,
-    .contact-form__actions {
+    body:has(.contact-page) .contact-form__field--message,
+    body:has(.contact-page) .contact-form__actions {
         grid-column: 1;
     }
 
-    .contact-form__actions {
+    body:has(.contact-page) .contact-form__actions {
         justify-content: stretch;
     }
 
-    .contact-form__actions button {
+    body:has(.contact-page) .contact-form__actions button {
         width: 100%;
+    }
+
+    body:has(.contact-page) .contact-map {
+        height: 360px;
+    }
+}
+
+@media (max-width: 425px) {
+    body:has(.contact-page) .contact-shell {
+        width: calc(100% - 32px);
+        padding-bottom: 64px;
+    }
+
+    body:has(.contact-page) .contact-alert {
+        padding: 12px 14px;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    body:has(.contact-page) .contact-product__row {
+        grid-template-columns: 76px minmax(0, 1fr);
+        font-size: 14px;
+    }
+
+    body:has(.contact-page) .contact-product__row img {
+        width: 76px;
+        height: 76px;
+    }
+
+    body:has(.contact-page) .contact-info-card {
+        gap: 14px;
+        padding: 18px 16px;
+        font-size: 14px;
+    }
+
+    body:has(.contact-page) .contact-details__item {
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 14px;
+        font-size: 15px;
+        line-height: 1.45;
+    }
+
+    body:has(.contact-page) .contact-form__field label {
+        font-size: 15px;
+    }
+
+    body:has(.contact-page) .contact-form__field input {
+        height: 46px;
+    }
+
+    body:has(.contact-page) .contact-form__field textarea {
+        min-height: 148px;
+    }
+
+    body:has(.contact-page) .contact-map {
+        height: 320px;
+    }
+}
+
+@media (max-width: 375px) {
+    body:has(.contact-page) .contact-info-grid {
+        gap: 14px;
+    }
+
+    body:has(.contact-page) .contact-consult {
+        gap: 28px;
+    }
+}
+
+@media (max-width: 320px) {
+    body:has(.contact-page) .contact-shell {
+        width: calc(100% - 24px);
+    }
+
+    body:has(.contact-page) .contact-product__row {
+        grid-template-columns: 68px minmax(0, 1fr);
+        font-size: 13px;
+    }
+
+    body:has(.contact-page) .contact-product__row img {
+        width: 68px;
+        height: 68px;
+    }
+
+    body:has(.contact-page) .contact-info-card {
+        padding: 16px 14px;
+    }
+
+    body:has(.contact-page) .contact-form__field textarea {
+        min-height: 140px;
+    }
+
+    body:has(.contact-page) .contact-map {
+        height: 300px;
     }
 }

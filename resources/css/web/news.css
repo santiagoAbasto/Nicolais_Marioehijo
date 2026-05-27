@@ -16,3 +16,115 @@
 .news-pagination {
     margin-top: 32px;
 }
+
+@media (max-width: 1024px) {
+    body:has(.news-page) .news-shell {
+        width: min(1224px, calc(100% - 40px));
+        padding-top: 24px;
+        padding-bottom: 110px;
+    }
+
+    body:has(.news-page) .news-breadcrumb {
+        margin-bottom: 32px;
+    }
+
+    body:has(.news-page) .nm-home-news__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body:has(.news-page) .nm-news-card,
+    body:has(.news-page) .nm-news-card__image {
+        width: 100%;
+    }
+
+    body:has(.news-page) .nm-news-card {
+        height: auto;
+        min-height: 414px;
+    }
+
+    body:has(.news-page) .nm-news-card__image {
+        aspect-ratio: 392 / 238;
+        height: auto;
+    }
+
+    body:has(.news-page) .nm-news-card__body {
+        height: 176px;
+    }
+
+    body:has(.news-page) .nm-news-card__category,
+    body:has(.news-page) .nm-news-card__title,
+    body:has(.news-page) .nm-news-card__excerpt,
+    body:has(.news-page) .nm-news-card__more {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    body:has(.news-page) .news-shell {
+        width: calc(100% - 40px);
+        padding-top: 22px;
+        padding-bottom: 76px;
+    }
+
+    body:has(.news-page) .news-breadcrumb {
+        margin-bottom: 24px;
+    }
+
+    body:has(.news-page) .nm-home-news__grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    body:has(.news-page) .nm-news-card {
+        min-height: 0;
+    }
+
+    body:has(.news-page) .nm-news-card__title {
+        white-space: normal;
+    }
+
+    body:has(.news-page) .news-pagination {
+        margin-top: 30px;
+    }
+
+    body:has(.news-page) .news-pagination nav,
+    body:has(.news-page) .news-pagination div {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 425px) {
+    body:has(.news-page) .news-shell {
+        width: calc(100% - 32px);
+        padding-bottom: 64px;
+    }
+
+    body:has(.news-page) .nm-news-card__body {
+        height: auto;
+        min-height: 182px;
+        padding: 17px 16px 54px;
+    }
+
+    body:has(.news-page) .nm-news-card__title {
+        font-size: 18px;
+        line-height: 22px;
+    }
+
+    body:has(.news-page) .nm-news-card__excerpt,
+    body:has(.news-page) .nm-news-card__more {
+        font-size: 14px;
+    }
+
+    body:has(.news-page) .nm-news-card__more {
+        right: 16px;
+        bottom: 14px;
+        left: 16px;
+        width: auto;
+    }
+}
+
+@media (max-width: 320px) {
+    body:has(.news-page) .news-shell {
+        width: calc(100% - 24px);
+    }
+}

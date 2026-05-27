@@ -50,7 +50,44 @@
                         </div>
                     </details>
                 </form>
+
+                <button
+                    class="products-mobile-menu-toggle"
+                    type="button"
+                    aria-label="Abrir menú"
+                    aria-controls="products-mobile-nav"
+                    aria-expanded="false"
+                    data-products-menu-toggle
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
             </div>
+
+            <nav class="products-mobile-nav" id="products-mobile-nav" data-products-mobile-menu aria-label="Menú Zona Cliente" hidden>
+                <button class="products-mobile-nav__backdrop" type="button" data-products-menu-close aria-label="Cerrar menú"></button>
+                <div class="products-mobile-nav__panel" data-products-mobile-menu-panel>
+                    <div class="products-mobile-nav__head">
+                        <a href="{{ route('web.client-zone.index') }}" class="products-mobile-nav__logo" aria-label="Nicolais Mario e Hijo">
+                            <img src="{{ asset('storage/brand/logo.svg') }}" alt="Nicolais Mario e Hijo" width="180" height="58">
+                        </a>
+                        <button class="products-mobile-nav__close" type="button" data-products-menu-close aria-label="Cerrar menú">
+                            <span></span>
+                            <span></span>
+                        </button>
+                    </div>
+
+                    @foreach ($sections as $slug => $label)
+                        <a href="{{ $slug === 'productos' ? route('web.client-zone.index') : route('web.client-zone.section', $slug) }}" @if ($section === $slug) aria-current="page" @endif>{{ $label }}</a>
+                    @endforeach
+
+                    <form class="client-zone-mobile-logout" action="{{ route('web.client-zone.logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="products-mobile-nav__client">Cerrar sesión</button>
+                    </form>
+                </div>
+            </nav>
         </header>
 
         <section @class([

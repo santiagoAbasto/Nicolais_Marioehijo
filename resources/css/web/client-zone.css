@@ -2754,3 +2754,579 @@ body.is-client-product-modal-open {
         min-height: 360px;
     }
 }
+
+@media (max-width: 1024px) {
+    body:has(.client-zone-page) {
+        overflow-x: hidden;
+    }
+
+    body:has(.client-zone-page).products-menu-open {
+        overflow: hidden;
+    }
+
+    body:has(.client-zone-page) .products-topbar__inner,
+    body:has(.client-zone-page) .products-header__inner,
+    body:has(.client-zone-page) .products-shell {
+        width: calc(100% - 40px);
+        max-width: 1224px;
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    body:has(.client-zone-page) .products-header {
+        height: 92px;
+    }
+
+    body:has(.client-zone-page) .products-header__inner {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        height: 92px;
+        padding-top: 0;
+    }
+
+    body:has(.client-zone-page) .products-header__logo,
+    body:has(.client-zone-page) .products-header__logo img {
+        width: 176px;
+        height: auto;
+    }
+
+    body:has(.client-zone-page) .client-zone-nav,
+    body:has(.client-zone-page) .client-zone-profile {
+        display: none;
+    }
+
+    body:has(.client-zone-page) .products-mobile-menu-toggle {
+        display: inline-flex;
+    }
+
+    body:has(.client-zone-page) .products-mobile-nav {
+        z-index: 2200;
+    }
+
+    body:has(.client-zone-page) .client-zone-mobile-logout {
+        display: block;
+        margin: 16px 0 0;
+    }
+
+    body:has(.client-zone-page) .client-zone-mobile-logout .products-mobile-nav__client {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-zone-shell,
+    body:has(.client-zone-page) .client-zone-shell--products,
+    body:has(.client-zone-page) .client-zone-shell--orders,
+    body:has(.client-zone-page) .client-zone-shell--price-lists,
+    body:has(.client-zone-page) .client-zone-shell--payments {
+        min-height: 0;
+        padding-top: 24px;
+        padding-bottom: 82px;
+    }
+
+    body:has(.client-zone-page) .products-breadcrumb {
+        margin-bottom: 28px;
+    }
+
+    body:has(.client-zone-page) .client-products-table,
+    body:has(.client-zone-page) .client-cart__table,
+    body:has(.client-zone-page) .client-orders__table,
+    body:has(.client-zone-page) .client-price-lists__table,
+    body:has(.client-zone-page) .client-payments__history table {
+        min-width: 920px;
+        width: 920px;
+    }
+
+    body:has(.client-zone-page) .client-products-table-wrap,
+    body:has(.client-zone-page) .client-cart__table-wrap,
+    body:has(.client-zone-page) .client-orders__table-wrap,
+    body:has(.client-zone-page) .client-price-lists__table-wrap,
+    body:has(.client-zone-page) .client-payments__history {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    body:has(.client-zone-page) .client-orders,
+    body:has(.client-zone-page) .client-price-lists,
+    body:has(.client-zone-page) .client-payments,
+    body:has(.client-zone-page) .client-payments__history {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-payments__grid {
+        grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+        gap: 28px;
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-payments__aside,
+    body:has(.client-zone-page) .client-payments__info h1,
+    body:has(.client-zone-page) .client-payments__info h2,
+    body:has(.client-zone-page) .client-payments__text,
+    body:has(.client-zone-page) .client-payments__divider {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-payments__form {
+        width: 100%;
+        height: auto;
+    }
+
+    body:has(.client-zone-page) .client-payments__form-grid--two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body:has(.client-zone-page) .client-payments__form-grid--three {
+        gap: 18px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    body:has(.client-zone-page) .client-payments__form-grid--three label:nth-child(1),
+    body:has(.client-zone-page) .client-payments__form-grid--three label:nth-child(2),
+    body:has(.client-zone-page) .client-payments__form-grid--three label:nth-child(3) {
+        grid-column: auto;
+    }
+
+    body:has(.client-zone-page) .client-payments textarea,
+    body:has(.client-zone-page) .client-payments__file-control {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-cart__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    body:has(.client-zone-page) .client-cart__panel,
+    body:has(.client-zone-page) .client-cart__summary,
+    body:has(.client-zone-page) .client-cart__panel h2,
+    body:has(.client-zone-page) .client-cart__summary h2,
+    body:has(.client-zone-page) .client-cart__message,
+    body:has(.client-zone-page) .client-cart__panel p,
+    body:has(.client-zone-page) .client-cart__panel label {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-cart__summary .is-spaced {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-cart__actions {
+        grid-template-columns: minmax(0, 1fr) 220px 220px;
+        gap: 18px;
+    }
+
+    body:has(.client-zone-page) .client-cart__file-control {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-cart__cancel,
+    body:has(.client-zone-page) .client-cart__submit {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-cart__table {
+        min-width: 1180px;
+        width: 1180px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th,
+    body:has(.client-zone-page) .client-cart__table td {
+        box-sizing: border-box;
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(1),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(1) {
+        width: 118px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(2),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(2) {
+        width: 112px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(3),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(3) {
+        width: 182px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(4),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(4) {
+        width: 112px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(5),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(5) {
+        width: 126px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(6),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(6) {
+        width: 146px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(7),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(7) {
+        width: 126px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(8),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(8) {
+        width: 84px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(9),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(9) {
+        width: 126px;
+    }
+
+    body:has(.client-zone-page) .client-cart__table th:nth-child(10),
+    body:has(.client-zone-page) .client-cart__table td:nth-child(10) {
+        width: 48px;
+    }
+
+    body:has(.client-zone-page) .client-budget__services-wrap,
+    body:has(.client-zone-page) .client-budget__service-form,
+    body:has(.client-zone-page) .client-budget__services-heading,
+    body:has(.client-zone-page) .client-budget__service-card,
+    body:has(.client-zone-page) .client-budget__selected-services,
+    body:has(.client-zone-page) .client-budget__selected-services-heading,
+    body:has(.client-zone-page) .client-budget__selected-service {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-budget__service-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body:has(.client-zone-page) .client-budget__services-wrap,
+    body:has(.client-zone-page) .client-budget__selected-services {
+        overflow-x: auto;
+    }
+
+    body:has(.client-zone-page) .client-budget__services-heading,
+    body:has(.client-zone-page) .client-budget__service-card,
+    body:has(.client-zone-page) .client-budget__selected-services-heading,
+    body:has(.client-zone-page) .client-budget__selected-service {
+        min-width: 920px;
+    }
+
+    body:has(.client-zone-page) .client-zone-margins {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    body:has(.client-zone-page) .products-topbar__inner,
+    body:has(.client-zone-page) .products-header__inner,
+    body:has(.client-zone-page) .products-shell {
+        width: calc(100% - 40px);
+    }
+
+    body:has(.client-zone-page) .products-header {
+        height: 82px;
+    }
+
+    body:has(.client-zone-page) .products-header__inner {
+        height: 82px;
+    }
+
+    body:has(.client-zone-page) .products-header__logo,
+    body:has(.client-zone-page) .products-header__logo img {
+        width: 154px;
+    }
+
+    body:has(.client-zone-page) .client-zone-shell,
+    body:has(.client-zone-page) .client-zone-shell--products,
+    body:has(.client-zone-page) .client-zone-shell--orders,
+    body:has(.client-zone-page) .client-zone-shell--price-lists,
+    body:has(.client-zone-page) .client-zone-shell--payments {
+        padding-top: 22px;
+        padding-bottom: 68px;
+    }
+
+    body:has(.client-zone-page) .client-products-toolbar {
+        justify-content: flex-start;
+        margin: 24px 0 14px;
+    }
+
+    body:has(.client-zone-page) .client-products-table,
+    body:has(.client-zone-page) .client-orders__table,
+    body:has(.client-zone-page) .client-price-lists__table,
+    body:has(.client-zone-page) .client-payments__history table,
+    body:has(.client-zone-page) .client-budget__services-heading,
+    body:has(.client-zone-page) .client-budget__service-card,
+    body:has(.client-zone-page) .client-budget__selected-services-heading,
+    body:has(.client-zone-page) .client-budget__selected-service {
+        min-width: 760px;
+        width: 760px;
+    }
+
+    body:has(.client-zone-page) .client-payments__grid,
+    body:has(.client-zone-page) .client-payments__form-grid--two,
+    body:has(.client-zone-page) .client-payments__form-grid--three,
+    body:has(.client-zone-page) .client-cart__grid,
+    body:has(.client-zone-page) .client-cart__actions,
+    body:has(.client-zone-page) .client-zone-margins__grid {
+        grid-template-columns: 1fr;
+    }
+
+    body:has(.client-zone-page) .client-payments__grid {
+        margin-top: 26px;
+    }
+
+    body:has(.client-zone-page) .client-payments__divider {
+        margin: 34px 0 28px;
+    }
+
+    body:has(.client-zone-page) .client-payments__form {
+        padding: 22px 18px;
+    }
+
+    body:has(.client-zone-page) .client-payments__actions {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr;
+    }
+
+    body:has(.client-zone-page) .client-payments__required {
+        margin: 0;
+        white-space: normal;
+    }
+
+    body:has(.client-zone-page) .client-payments__actions button {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-cart__grid {
+        margin-top: 38px;
+    }
+
+    body:has(.client-zone-page) .client-cart__panel,
+    body:has(.client-zone-page) .client-cart__summary,
+    body:has(.client-zone-page) .client-cart__message {
+        height: auto;
+        min-height: 0;
+    }
+
+    body:has(.client-zone-page) .client-cart__message textarea {
+        min-height: 190px;
+    }
+
+    body:has(.client-zone-page) .client-cart__actions {
+        align-items: stretch;
+        margin-bottom: 48px;
+    }
+
+    body:has(.client-zone-page) .client-budget__add-actions {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    body:has(.client-zone-page) .client-cart__add-more,
+    body:has(.client-zone-page) .client-budget__add-service {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-budget__service-form {
+        grid-template-columns: 1fr;
+        padding: 18px;
+    }
+
+    body:has(.client-zone-page) .client-zone-content h1 {
+        font-size: 28px;
+    }
+
+    body:has(.client-zone-page) .client-zone-margins .client-zone-margins__intro h1,
+    body:has(.client-zone-page) .client-zone-margin-preview strong {
+        font-size: 34px;
+    }
+}
+
+@media (max-width: 425px) {
+    body:has(.client-zone-page) .products-topbar__inner,
+    body:has(.client-zone-page) .products-header__inner,
+    body:has(.client-zone-page) .products-shell {
+        width: calc(100% - 32px);
+    }
+
+    body:has(.client-zone-page) .products-header__logo,
+    body:has(.client-zone-page) .products-header__logo img {
+        width: 142px;
+    }
+
+    body:has(.client-zone-page) .products-mobile-menu-toggle {
+        width: 42px;
+        height: 42px;
+    }
+
+    body:has(.client-zone-page) .products-mobile-nav__panel {
+        width: min(86vw, 344px);
+        padding: 24px 16px;
+    }
+
+    body:has(.client-zone-page) .products-mobile-nav__logo {
+        width: 164px;
+    }
+
+    body:has(.client-zone-page) .client-products-table,
+    body:has(.client-zone-page) .client-orders__table,
+    body:has(.client-zone-page) .client-price-lists__table,
+    body:has(.client-zone-page) .client-payments__history table,
+    body:has(.client-zone-page) .client-budget__services-heading,
+    body:has(.client-zone-page) .client-budget__service-card,
+    body:has(.client-zone-page) .client-budget__selected-services-heading,
+    body:has(.client-zone-page) .client-budget__selected-service {
+        min-width: 680px;
+        width: 680px;
+    }
+
+    body:has(.client-zone-page) .client-product-destination-modal__dialog,
+    body:has(.client-zone-page) .client-payments-review-modal__dialog {
+        width: calc(100% - 32px);
+    }
+
+    body:has(.client-zone-page) .client-product-destination-modal__actions button {
+        width: 100%;
+    }
+
+    body:has(.client-zone-page) .client-cart__panel h2,
+    body:has(.client-zone-page) .client-cart__summary h2 {
+        height: auto;
+        min-height: 52px;
+        padding: 14px 18px;
+        font-size: 19px;
+    }
+
+    body:has(.client-zone-page) .client-cart__panel p,
+    body:has(.client-zone-page) .client-cart__panel label {
+        margin-top: 16px;
+        padding: 0 18px;
+        font-size: 15px;
+        line-height: 1.55;
+    }
+
+    body:has(.client-zone-page) .client-cart__panel {
+        overflow: visible;
+    }
+
+    body:has(.client-zone-page) .client-cart__panel p {
+        box-sizing: border-box;
+        padding-bottom: 18px;
+        overflow-wrap: anywhere;
+    }
+
+    body:has(.client-zone-page) .client-cart__delivery label {
+        align-items: flex-start;
+        gap: 14px;
+        min-height: 28px;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    body:has(.client-zone-page) .client-cart__delivery input[type="radio"] {
+        flex: 0 0 20px;
+        margin-top: 2px;
+    }
+
+    body:has(.client-zone-page) .client-cart__summary dl {
+        padding: 18px;
+    }
+
+    body:has(.client-zone-page) .client-cart__file {
+        font-size: 18px;
+    }
+
+    body:has(.client-zone-page) .client-cart__file-control {
+        padding-left: 14px;
+    }
+
+    body:has(.client-zone-page) .client-cart__file-button {
+        flex-basis: 112px;
+        width: 112px;
+    }
+
+    body:has(.client-zone-page) .client-zone-content h1 {
+        font-size: 25px;
+    }
+
+    body:has(.client-zone-page) .client-zone-content p,
+    body:has(.client-zone-page) .client-zone-margins__intro p,
+    body:has(.client-zone-page) .client-payments label {
+        font-size: 15px;
+    }
+
+    body:has(.client-zone-page) .client-zone-margins .client-zone-margins__intro h1,
+    body:has(.client-zone-page) .client-zone-margin-preview strong {
+        font-size: 30px;
+    }
+
+    body:has(.client-zone-page) .client-zone-margin-form,
+    body:has(.client-zone-page) .client-zone-margin-preview {
+        padding: 20px 18px;
+    }
+}
+
+@media (max-width: 375px) {
+    body:has(.client-zone-page) .products-header__logo,
+    body:has(.client-zone-page) .products-header__logo img {
+        width: 132px;
+    }
+
+    body:has(.client-zone-page) .products-mobile-nav__panel {
+        width: min(88vw, 326px);
+    }
+
+    body:has(.client-zone-page) .client-cart__file-control {
+        align-items: stretch;
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    body:has(.client-zone-page) .client-cart__file-button {
+        width: 100%;
+        flex-basis: auto;
+    }
+}
+
+@media (max-width: 320px) {
+    body:has(.client-zone-page) .products-topbar__inner,
+    body:has(.client-zone-page) .products-header__inner,
+    body:has(.client-zone-page) .products-shell {
+        width: calc(100% - 24px);
+    }
+
+    body:has(.client-zone-page) .products-header__logo,
+    body:has(.client-zone-page) .products-header__logo img {
+        width: 122px;
+    }
+
+    body:has(.client-zone-page) .products-mobile-menu-toggle {
+        width: 40px;
+        height: 40px;
+    }
+
+    body:has(.client-zone-page) .products-mobile-nav__panel {
+        width: min(90vw, 296px);
+        padding: 22px 14px;
+    }
+
+    body:has(.client-zone-page) .products-mobile-nav__logo {
+        width: 148px;
+    }
+
+    body:has(.client-zone-page) .client-zone-content h1 {
+        font-size: 23px;
+    }
+
+    body:has(.client-zone-page) .client-payments__form,
+    body:has(.client-zone-page) .client-budget__service-form {
+        padding: 16px 14px;
+    }
+}
