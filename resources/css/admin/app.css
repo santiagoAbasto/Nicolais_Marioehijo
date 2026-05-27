@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700&family=Raleway:wght@400&display=swap');
+
+@import "tailwindcss";
+
+@import "./pages/auth.css";
+
+@theme {
+  --font-sans: "Montserrat", ui-sans-serif, system-ui;
+}
+
+@keyframes adminToastBorderPulse {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: scale(0.992);
+    box-shadow: 0 0 14px rgba(37, 167, 202, 0.22), 0 0 30px rgba(37, 167, 202, 0.1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.012);
+    box-shadow: 0 0 24px rgba(37, 167, 202, 0.44), 0 0 52px rgba(37, 167, 202, 0.22);
+  }
+}
+
+@keyframes adminToastRingPulse {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: scale(0.985);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.045);
+  }
+}

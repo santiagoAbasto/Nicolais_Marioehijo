@@ -1,0 +1,213 @@
+@import "./app.css";
+
+body {
+    background: #1e1e1e;
+}
+
+.nm-site-footer,
+.floating-whatsapp {
+    display: none !important;
+}
+
+.client-zone {
+    color: #111010;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    margin: 48px auto;
+    min-height: calc(100vh - 96px);
+    width: min(1224px, calc(100% - 48px));
+}
+
+.client-zone__label {
+    color: #8d8d8d;
+    font-size: 12px;
+    margin-bottom: 7px;
+}
+
+.client-zone__topbar {
+    align-items: center;
+    background: #0072BB;
+    display: flex;
+    height: 22px;
+    justify-content: flex-end;
+    padding-right: 50px;
+}
+
+.client-zone__search {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    min-width: 340px;
+}
+
+.client-zone__search input {
+    background: transparent;
+    border: 0;
+    color: #fff;
+    font-size: 12px;
+    outline: 0;
+    text-align: right;
+    width: 210px;
+}
+
+.client-zone__search input::placeholder {
+    color: rgba(255, 255, 255, .78);
+}
+
+.client-zone__search button,
+.client-zone__user {
+    border: 0;
+    cursor: pointer;
+}
+
+.client-zone__search button {
+    align-items: center;
+    background: transparent;
+    display: flex;
+    height: 18px;
+    justify-content: center;
+    padding: 0;
+    width: 18px;
+}
+
+.client-zone__header {
+    align-items: center;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
+    display: flex;
+    gap: 42px;
+    height: 62px;
+    padding: 0 48px;
+}
+
+.client-zone__logo {
+    display: block;
+    flex: 0 0 auto;
+    width: 145px;
+}
+
+.client-zone__logo img {
+    display: block;
+    height: auto;
+    width: 145px;
+}
+
+.client-zone__nav {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    gap: 28px;
+    min-width: 0;
+}
+
+.client-zone__nav a {
+    color: #111010;
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 400;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.client-zone__nav a[aria-current="page"] {
+    font-weight: 700;
+}
+
+.client-zone__user {
+    align-items: center;
+    background: #0072BB;
+    border-radius: 5px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 11px;
+    font-weight: 700;
+    gap: 6px;
+    height: 32px;
+    justify-content: center;
+    padding: 0 15px;
+    min-width: 104px;
+}
+
+.client-zone__content {
+    background: #fff;
+    min-height: calc(100vh - 238px);
+    padding: 38px 48px 64px;
+}
+
+.client-zone__breadcrumb {
+    color: #111010;
+    font-size: 10px;
+    margin: 0 0 28px;
+}
+
+.client-zone__content h1 {
+    font-size: 28px;
+    margin: 0 0 12px;
+}
+
+.client-zone__content p {
+    color: #5c5c5c;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.client-zone__results {
+    display: grid;
+    gap: 10px;
+}
+
+.client-zone__results h2 {
+    font-size: 18px;
+    margin: 0 0 6px;
+}
+
+.client-zone__results a {
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    color: #111010;
+    display: block;
+    font-size: 14px;
+    padding: 12px 14px;
+    text-decoration: none;
+}
+
+@media (max-width: 860px) {
+    .client-zone {
+        margin: 20px auto;
+        min-height: calc(100vh - 40px);
+        width: min(100% - 24px, 1224px);
+    }
+
+    .client-zone__topbar {
+        padding: 0 18px;
+    }
+
+    .client-zone__search {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .client-zone__search input {
+        flex: 1;
+        text-align: left;
+        width: auto;
+    }
+
+    .client-zone__header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+        height: auto;
+        padding: 18px;
+    }
+
+    .client-zone__nav {
+        flex-wrap: wrap;
+        gap: 12px 18px;
+    }
+
+    .client-zone__content {
+        min-height: 420px;
+        padding: 28px 18px 48px;
+    }
+}

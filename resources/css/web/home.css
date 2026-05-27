@@ -1,0 +1,302 @@
+@import "./app.css";
+@import "./sections/home-hero.css";
+@import "./sections/home-representatives.css";
+@import "./sections/products-public.css";
+
+.nm-home-search {
+    width: min(1224px, calc(100% - 32px));
+    margin: 64px auto 0;
+}
+
+.nm-home-categories {
+    width: min(1224px, calc(100% - 32px));
+    margin: 0 auto;
+}
+
+.nm-home-about {
+    display: grid;
+    grid-template-columns: minmax(0, 671fr) minmax(0, 695fr);
+    width: 100%;
+    height: 600px;
+    margin: 60px 0 0;
+}
+
+.nm-home-about__image {
+    width: 100%;
+    height: 600px;
+    overflow: hidden;
+    background: #d9d9d9;
+}
+
+.nm-home-about__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+}
+
+.nm-home-about__content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 600px;
+    background: #0072bb;
+    padding-left: 66px;
+}
+
+.nm-home-about__copy {
+    width: 601px;
+}
+
+.nm-home-about h2 {
+    width: 601px;
+    margin: 0;
+    color: #ffffff;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 32px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: 0;
+}
+
+.nm-home-about__text {
+    width: 562px;
+    margin-top: 31px;
+    color: #ffffff;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.nm-home-about__text p {
+    margin: 0 0 18px;
+}
+
+.nm-home-about__text p:last-child {
+    margin-bottom: 0;
+}
+
+.nm-home-about__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 142px;
+    height: 46px;
+    margin-top: 40px;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 0 38px;
+    color: #0072bb;
+    text-align: center;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.nm-home-featured {
+    width: min(1224px, calc(100% - 32px));
+    margin: 69px auto 0;
+}
+
+.nm-home-featured__head {
+    margin: 0 0 33px;
+}
+
+.nm-home-featured__grid {
+    grid-template-columns: repeat(4, 288px);
+}
+
+.nm-home-news {
+    width: min(1224px, calc(100% - 32px));
+    margin: 69px auto 0;
+}
+
+.nm-home-news__head {
+    margin: 0 0 33px;
+}
+
+.nm-home-news__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 392px);
+    gap: 24px;
+}
+
+.nm-news-card {
+    display: block;
+    box-sizing: border-box;
+    width: 392px;
+    height: 427px;
+    overflow: hidden;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    color: #111010;
+    text-decoration: none;
+}
+
+.nm-news-card__image {
+    display: block;
+    width: 392px;
+    height: 238px;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+    background: lightgray 50% / cover no-repeat;
+}
+
+.nm-news-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nm-news-card__body {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    height: 189px;
+    padding: 19px 22px 12px 21px;
+}
+
+.nm-news-card__category {
+    display: block;
+    width: 240px;
+    color: #0072bb;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 22px;
+    text-transform: uppercase;
+}
+
+.nm-news-card__title {
+    display: block;
+    width: 349px;
+    margin-top: 19px;
+    color: #111010;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nm-news-card__excerpt {
+    display: -webkit-box;
+    width: 349px;
+    height: 42px;
+    margin-top: 12px;
+    overflow: hidden;
+    color: #000000;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 22px;
+    text-overflow: ellipsis;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.nm-news-card__more {
+    position: absolute;
+    right: 22px;
+    bottom: 12px;
+    left: 21px;
+    display: flex;
+    align-items: center;
+    width: 349px;
+    color: #000000;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 22px;
+}
+
+.nm-news-card__more span {
+    display: block;
+    width: 240px;
+}
+
+.nm-news-card__more svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+    margin-left: 95px;
+    flex: 0 0 14px;
+    stroke-width: 2px;
+}
+
+@media (max-width: 1365px) {
+    .nm-home-about__content {
+        padding: 0 32px 0 48px;
+    }
+
+    .nm-home-about__copy,
+    .nm-home-about h2,
+    .nm-home-about__text {
+        width: 100%;
+        max-width: 601px;
+    }
+
+    .nm-home-featured__grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .nm-home-news__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .nm-news-card,
+    .nm-news-card__image {
+        width: 100%;
+    }
+
+    .nm-news-card__body,
+    .nm-news-card__title,
+    .nm-news-card__excerpt,
+    .nm-news-card__more {
+        width: 100%;
+    }
+
+    .nm-news-card__more svg {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 900px) {
+    .nm-home-about {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .nm-home-about__image,
+    .nm-home-about__content {
+        height: auto;
+        min-height: 360px;
+    }
+
+    .nm-home-about__content {
+        padding: 48px 24px;
+    }
+
+    .nm-home-featured__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nm-home-news__grid {
+        grid-template-columns: 1fr;
+    }
+}

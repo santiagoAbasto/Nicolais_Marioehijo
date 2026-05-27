@@ -1,0 +1,18 @@
+@import "./home.css";
+
+.news-shell {
+    padding-top: 26px;
+    padding-bottom: 237px;
+}
+
+.news-breadcrumb {
+    margin-bottom: 37px;
+}
+
+.news-page + .nm-site-footer {
+    margin-top: 0;
+}
+
+.news-pagination {
+    margin-top: 32px;
+}

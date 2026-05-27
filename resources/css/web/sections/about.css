@@ -1,0 +1,242 @@
+.about-page {
+    min-height: 100vh;
+    background: #ffffff;
+    color: var(--Negro, #000000);
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.about-page + .nm-site-footer {
+    margin-top: 0;
+}
+
+.about-shell {
+    width: min(1224px, calc(100% - 32px));
+    margin: 0 auto;
+    padding-top: 26px;
+}
+
+.about-breadcrumb {
+    margin-bottom: 81px;
+}
+
+.about-intro {
+    display: grid;
+    grid-template-columns: 600px 1fr;
+    gap: 41px;
+    align-items: start;
+}
+
+.about-intro__image {
+    width: 600px;
+    height: 600px;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 8px;
+    background: lightgray -0.198px -16.539px / 100.066% 114.333% no-repeat;
+}
+
+.about-intro__image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+}
+
+.about-intro__content {
+    width: 601px;
+    margin-top: 62px;
+}
+
+.about-intro h1 {
+    width: 601px;
+    margin: 0;
+    color: var(--Negro, #000000);
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 32px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: -0.32px;
+}
+
+.about-intro__text {
+    width: 582px;
+    margin-top: 79px;
+    color: var(--Negro, #000000);
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 22px;
+    white-space: pre-line;
+}
+
+.about-intro__text p {
+    margin: 0 0 18px;
+    color: var(--Negro, #000000);
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.about-intro__text p:last-child {
+    margin-bottom: 0;
+}
+
+.about-why {
+    width: 100%;
+    margin-top: 74px;
+    background: #f8f8f8;
+    padding-bottom: 64px;
+}
+
+.about-why__inner {
+    width: min(1224px, calc(100% - 32px));
+    margin: 0 auto;
+    padding-top: 40px;
+}
+
+.about-why h2 {
+    width: 601px;
+    margin: 0;
+    color: var(--Negro, #111010);
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 32px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+}
+
+.about-values-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 392px);
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.about-value-card {
+    box-sizing: border-box;
+    width: 392px;
+    height: 392px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #ffffff;
+    padding: 20px 24px 13px;
+    text-align: center;
+}
+
+.about-value-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+}
+
+.about-value-card__icon svg {
+    display: block;
+    width: 60px;
+    height: 60px;
+}
+
+.about-value-card h3 {
+    margin: 16px 0 0;
+    color: var(--Negro, #000000);
+    text-align: center;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+}
+
+.about-value-card__text {
+    margin-top: 11px;
+    color: var(--Negro, #000000);
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 22px;
+    white-space: pre-line;
+}
+
+.about-value-card__text p {
+    margin: 0 0 14px;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+}
+
+.about-value-card__text p:last-child {
+    margin-bottom: 0;
+}
+
+.about-value-card__text p:first-child {
+    margin-top: 0;
+}
+
+@media (max-width: 1365px) {
+    .about-intro {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .about-intro__image,
+    .about-intro__content,
+    .about-intro h1,
+    .about-intro__text {
+        width: 100%;
+    }
+
+    .about-values-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .about-value-card {
+        width: 100%;
+    }
+}
+
+@media (max-width: 900px) {
+    .about-breadcrumb {
+        margin-bottom: 40px;
+    }
+
+    .about-intro {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    .about-intro__image {
+        height: auto;
+    }
+
+    .about-intro__content {
+        margin-top: 0;
+    }
+
+    .about-intro__text {
+        margin-top: 28px;
+    }
+
+    .about-why {
+        min-height: 0;
+    }
+
+    .about-why h2 {
+        width: 100%;
+    }
+
+    .about-values-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .about-value-card {
+        height: auto;
+        min-height: 300px;
+    }
+}

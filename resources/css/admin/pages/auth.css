@@ -1,0 +1,500 @@
+:root {
+    --gs-auth-bg: #f3f7fb;
+    --gs-auth-panel: #ffffff;
+    --gs-auth-panel-border: rgba(148, 163, 184, 0.18);
+    --gs-auth-text: #0f172a;
+    --gs-auth-muted: #526075;
+    --gs-auth-soft: #6f7f95;
+    --gs-auth-accent: #25a7ca;
+    --gs-auth-accent-deep: #117a98;
+    --gs-auth-accent-soft: rgba(37, 167, 202, 0.12);
+    --gs-auth-shadow: 0 32px 80px rgba(15, 23, 42, 0.14);
+}
+
+.gs-auth {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top left, rgba(37, 167, 202, 0.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.12), transparent 32%),
+        linear-gradient(180deg, #f8fbfd 0%, var(--gs-auth-bg) 100%);
+    font-family: 'DM Sans', sans-serif;
+}
+
+.gs-auth__ambient {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.24) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.24) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 85%);
+    pointer-events: none;
+}
+
+.gs-auth__shell {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(320px, 1.05fr) minmax(320px, 0.95fr);
+    min-height: 100vh;
+}
+
+.gs-auth__brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 3.5rem 4.5rem;
+    background:
+        linear-gradient(145deg, rgba(7, 16, 31, 0.96), rgba(8, 34, 54, 0.92)),
+        linear-gradient(145deg, #0f172a, #0b3b50);
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+.gs-auth__brand::before,
+.gs-auth__brand::after {
+    content: '';
+    position: absolute;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+.gs-auth__brand::before {
+    width: 28rem;
+    height: 28rem;
+    right: -10rem;
+    top: -8rem;
+    background: radial-gradient(circle, rgba(37, 167, 202, 0.28), transparent 68%);
+}
+
+.gs-auth__brand::after {
+    width: 18rem;
+    height: 18rem;
+    left: -5rem;
+    bottom: -4rem;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 72%);
+}
+
+.gs-auth__eyebrow {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 0.65rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(12px);
+}
+
+.gs-auth__logo-shell {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 11rem;
+    height: 11rem;
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.22);
+    padding: 1.35rem;
+}
+
+.gs-auth__logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.gs-auth__logo-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 1.4rem;
+    background: linear-gradient(135deg, #0f172a 0%, #25a7ca 100%);
+    color: #ffffff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.gs-auth__brand-copy,
+.gs-auth__brand-notes {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+.gs-auth__brand-title {
+    margin: 0;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(2.4rem, 4vw, 4.35rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+
+.gs-auth__brand-desc {
+    max-width: 34rem;
+    margin: 1rem 0 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 1.04rem;
+    line-height: 1.7;
+    text-align: center;
+}
+
+.gs-auth__brand-notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.gs-auth__brand-copy {
+    text-align: center;
+}
+
+.gs-auth__note {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-height: 9.5rem;
+    padding: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.4rem;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(14px);
+}
+
+.gs-auth__note strong {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.gs-auth__note span {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.gs-auth__form-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem;
+}
+
+.gs-auth__form-box {
+    width: 100%;
+    max-width: 32rem;
+    border: 1px solid var(--gs-auth-panel-border);
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--gs-auth-shadow);
+    backdrop-filter: blur(18px);
+    padding: 2.2rem;
+}
+
+.gs-auth__form-header {
+    margin-bottom: 1.8rem;
+}
+
+.gs-auth__form-kicker {
+    display: inline-block;
+    margin-bottom: 0.85rem;
+    color: var(--gs-auth-accent-deep);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.gs-auth__form-title {
+    margin: 0;
+    color: var(--gs-auth-text);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(2rem, 2vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.gs-auth__form-desc {
+    margin: 0.9rem 0 0;
+    color: var(--gs-auth-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.gs-auth__status {
+    margin-bottom: 1.35rem;
+    border: 1px solid rgba(15, 118, 110, 0.18);
+    border-radius: 1rem;
+    background: rgba(15, 118, 110, 0.08);
+    color: #0f766e;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.95rem 1rem;
+}
+
+.gs-auth__form {
+    display: grid;
+    gap: 1.2rem;
+}
+
+.gs-auth__field {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.gs-auth__label {
+    color: var(--gs-auth-text);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.gs-auth__input-shell {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-height: 3.75rem;
+    border: 1px solid #d7e2ec;
+    border-radius: 1rem;
+    background: #ffffff;
+    padding: 0 1rem;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.gs-auth__input-shell:focus-within {
+    border-color: var(--gs-auth-accent);
+    box-shadow: 0 0 0 0.28rem var(--gs-auth-accent-soft);
+    transform: translateY(-1px);
+}
+
+.gs-auth__input-icon {
+    display: inline-flex;
+    color: var(--gs-auth-soft);
+    flex-shrink: 0;
+}
+
+.gs-auth__input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--gs-auth-text);
+    font-size: 0.98rem;
+    padding: 1rem 0;
+    outline: none;
+    box-shadow: none;
+}
+
+.gs-auth__input::placeholder {
+    color: #94a3b8;
+}
+
+.gs-auth__input--with-action {
+    padding-right: 0.35rem;
+}
+
+.gs-auth__password-toggle {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: var(--gs-auth-accent-deep);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+}
+
+.gs-auth__form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.gs-auth__check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--gs-auth-muted);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.gs-auth__check input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--gs-auth-accent);
+}
+
+.gs-auth__helper-link {
+    color: var(--gs-auth-accent-deep);
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.gs-auth__helper-link:hover {
+    text-decoration: underline;
+}
+
+.gs-auth__submit {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 3.8rem;
+    width: 100%;
+    border: none;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #25a7ca 0%, #117a98 100%);
+    color: #ffffff;
+    font-size: 0.98rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 20px 38px rgba(17, 122, 152, 0.24);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.gs-auth__submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 24px 42px rgba(17, 122, 152, 0.28);
+}
+
+.gs-auth__submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.gs-auth__error {
+    margin-top: 0.1rem;
+    color: #dc2626;
+    font-size: 0.88rem;
+}
+
+.gs-auth__support-copy {
+    margin: 1.35rem 0 0;
+    color: var(--gs-auth-soft);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 1180px) {
+    .gs-auth__shell {
+        grid-template-columns: 1fr;
+    }
+
+    .gs-auth__brand {
+        min-height: auto;
+        padding: 2.4rem 1.4rem 1.6rem;
+    }
+
+    .gs-auth__brand-notes {
+        grid-template-columns: 1fr;
+    }
+
+    .gs-auth__note {
+        min-height: auto;
+    }
+
+    .gs-auth__form-panel {
+        padding-top: 0;
+    }
+}
+
+@media (max-width: 720px) {
+    .gs-auth__shell {
+        min-height: auto;
+    }
+
+    .gs-auth__brand {
+        gap: 1.15rem;
+        padding: 1.4rem 1rem 1.2rem;
+    }
+
+    .gs-auth__eyebrow {
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        padding: 0.6rem 0.85rem;
+    }
+
+    .gs-auth__logo-shell {
+        width: 5.5rem;
+        height: 5.5rem;
+        border-radius: 1.35rem;
+        padding: 0.85rem;
+    }
+
+    .gs-auth__logo-fallback {
+        border-radius: 1rem;
+        font-size: 1.65rem;
+    }
+
+    .gs-auth__brand-title {
+        font-size: 2.35rem;
+    }
+
+    .gs-auth__brand-desc {
+        font-size: 0.95rem;
+        line-height: 1.55;
+    }
+
+    .gs-auth__brand-notes {
+        display: none;
+    }
+
+    .gs-auth__form-panel {
+        padding: 1rem;
+    }
+
+    .gs-auth__form-box {
+        max-width: none;
+        border-radius: 1.5rem;
+        padding: 1.4rem;
+    }
+
+    .gs-auth__form-title {
+        font-size: 1.85rem;
+    }
+
+    .gs-auth__form-desc,
+    .gs-auth__support-copy {
+        font-size: 0.92rem;
+    }
+
+    .gs-auth__input-shell {
+        min-height: 3.45rem;
+        padding: 0 0.9rem;
+    }
+
+    .gs-auth__submit {
+        min-height: 3.4rem;
+    }
+}

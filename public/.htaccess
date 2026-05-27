@@ -1,0 +1,48 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Keep legacy favicon URLs working while the public assets live in one place.
+    RewriteRule ^rc-favicon\.ico$ favicon.ico [L]
+    RewriteRule ^rc-favicon\.svg$ favicon.svg [L]
+    RewriteRule ^rc-favicon-96x96\.png$ favicon-96x96.png [L]
+    RewriteRule ^rc-favicon-192x192\.png$ favicon-192x192.png [L]
+    RewriteRule ^rc-favicon-512x512\.png$ favicon-512x512.png [L]
+    RewriteRule ^rc-apple-touch-icon\.png$ apple-touch-icon.png [L]
+    RewriteRule ^rc-apple-touch-icon-precomposed\.png$ apple-touch-icon-precomposed.png [L]
+    RewriteRule ^rc-site\.webmanifest$ site.webmanifest [L]
+    RewriteRule ^favicon/favicon\.ico$ favicon.ico [L]
+    RewriteRule ^favicon/favicon\.svg$ favicon.svg [L]
+    RewriteRule ^favicon/favicon-96x96\.png$ favicon-96x96.png [L]
+    RewriteRule ^favicon/favicon-192x192\.png$ favicon-192x192.png [L]
+    RewriteRule ^favicon/favicon-512x512\.png$ favicon-512x512.png [L]
+    RewriteRule ^favicon/apple-touch-icon\.png$ apple-touch-icon.png [L]
+    RewriteRule ^favicon/site\.webmanifest$ site.webmanifest [L]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_php.c>
+    php_value upload_max_filesize 50M
+    php_value post_max_size 60M
+    php_value memory_limit 512M
+</IfModule>
