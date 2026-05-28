@@ -225,14 +225,35 @@ if (! function_exists('default_seo_image_url')) {
     function default_seo_image_url(): ?string
     {
         foreach ([
+            'favicon/web-app-manifest-512x512.png',
+            'favicon/web-app-manifest-192x192.png',
+            'favicon/apple-touch-icon.png',
+        ] as $relativePath) {
+            if (file_exists(public_path($relativePath))) {
+                return cms_public_app_url().'/'.$relativePath;
+            }
+        }
+
+        foreach ([
             cms_branding_logo_path('home_header'),
             cms_branding_logo_path('sections_header'),
             cms_branding_logo_path('footer'),
+            'brand/logo.svg',
+            'brand/logofo.svg',
         ] as $brandingPath) {
             $asset = cms_media_asset_by_path($brandingPath);
 
             if ($asset) {
                 return media_asset_url($asset, cms_public_app_url());
+            }
+        }
+
+        foreach ([
+            'storage/brand/logo.svg',
+            'storage/brand/logofo.svg',
+        ] as $relativePath) {
+            if (file_exists(public_path($relativePath))) {
+                return cms_public_app_url().'/'.$relativePath;
             }
         }
 

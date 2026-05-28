@@ -7,6 +7,7 @@
         $canonicalUrl = url()->current();
         $robots = request()->is('admin*') ? 'noindex,nofollow' : 'index,follow';
         $cspNonce = request()->attributes->get('csp-nonce');
+        $shareImage = default_seo_image_url() ?: asset('storage/brand/logo.svg');
         $faviconVersion = max(array_map(
             static fn (string $path) => @filemtime(public_path($path)) ?: 0,
             [
@@ -42,9 +43,13 @@
     <meta property="og:title" content="{{ $appName }}">
     <meta property="og:description" content="{{ $appDescription }}">
     <meta property="og:url" content="{{ $canonicalUrl }}">
+    <meta property="og:image" content="{{ $shareImage }}">
+    <meta property="og:image:secure_url" content="{{ $shareImage }}">
+    <meta property="og:image:alt" content="{{ $appName }}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{{ $appName }}">
     <meta name="twitter:description" content="{{ $appDescription }}">
+    <meta name="twitter:image" content="{{ $shareImage }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

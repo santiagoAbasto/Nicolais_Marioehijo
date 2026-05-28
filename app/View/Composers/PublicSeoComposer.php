@@ -40,7 +40,7 @@ class PublicSeoComposer
         $metaDescription = $this->section('meta_description') ?: ($seo?->description ?: self::DEFAULT_DESCRIPTION);
         $metaKeywords = $this->section('meta_keywords') ?: ($seo?->keywords ?: self::DEFAULT_KEYWORDS);
         $metaOgType = $this->section('meta_og_type') ?: 'website';
-        $metaOgImage = $this->section('meta_og_image') ?: ($seo?->og_image_url ?: $this->defaultSeoImageUrl());
+        $metaOgImage = $this->section('meta_og_image') ?: ($this->seoImageUrl($seo) ?: $this->defaultSeoImageUrl());
         $metaOgImageAlt = $this->section('meta_og_image_alt') ?: ($metaTitle ? 'Vista previa de '.$metaTitle : $appName);
         $canonicalUrl = $this->section('canonical_url') ?: url()->current();
         $metaRobots = $this->section('meta_robots') ?: 'index,follow';
@@ -154,6 +154,17 @@ class PublicSeoComposer
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    protected function seoImageUrl(?SeoMeta $seo): ?string
+    {
+        $url = $seo?->og_image_url;
+
+        if (! $url || str_contains($url, 'images/admin/logo.png')) {
+            return null;
+        }
+
+        return $url;
     }
 
     protected function section(string $name): string
