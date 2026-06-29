@@ -346,6 +346,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/products/{product}', [ProductApiController::class, 'destroy'])->name('products.destroy');
             Route::post('/product-brand-images', [ProductCatalogAdminController::class, 'updateBrandImage'])->name('product-brand-images.update');
             Route::post('/product-import', [ProductImportController::class, 'store'])->name('product-import.store');
+            Route::post('/product-import/images', [ProductImportController::class, 'images'])->name('product-import.images');
             Route::get('/home-hero-slides', [HomeHeroSlideController::class, 'index'])->name('home-hero-slides.index');
             Route::post('/home-hero-slides', [HomeHeroSlideController::class, 'store'])->name('home-hero-slides.store');
             Route::put('/home-hero-slides/{homeHeroSlide}', [HomeHeroSlideController::class, 'update'])->name('home-hero-slides.update');

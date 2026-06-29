@@ -27,6 +27,16 @@
             </select>
         </label>
 
+        <label class="products-filter__field">
+            <span>Rubro</span>
+            <select name="rubro" onchange="this.form.submit()">
+                <option value="">Seleccionar rubro</option>
+                @foreach (($rubros ?? collect()) as $rubro)
+                    <option value="{{ $rubro }}" @selected(request('rubro') === $rubro)>{{ $rubro }}</option>
+                @endforeach
+            </select>
+        </label>
+
         <label class="products-filter__field products-filter__field--stack">
             <span>Marca y modelo</span>
             <select name="brand" onchange="this.form.submit()">

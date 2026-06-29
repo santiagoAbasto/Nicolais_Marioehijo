@@ -80,6 +80,7 @@
     max-width: 100%;
     height: 100px;
     border-bottom: 1px solid var(--Gris-linea, #d9d9d9);
+    background: #ffffff;
     color: var(--Negro, #000000);
     font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
     font-size: 16px;
@@ -93,7 +94,7 @@
     height: 90px;
     aspect-ratio: 1 / 1;
     margin-left: 14px;
-    background: lightgray 0 10.333px / 100% 77.037% no-repeat;
+    background: #ffffff;
     object-fit: contain;
 }
 

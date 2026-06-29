@@ -8,13 +8,17 @@
 @endpush
 
 @section('content')
-    <main class="products-page">
+    <main class="products-page news-page">
         @include('web.products.partials-header', ['current' => 'novedades'])
 
         <article class="products-shell news-detail-shell">
-            <p class="products-breadcrumb">
-                <a href="{{ route('web.news.index') }}">Novedades</a> · {{ $post->title }}
-            </p>
+            <nav class="products-breadcrumb news-detail-breadcrumb" aria-label="Breadcrumb">
+                <a href="{{ route('web.home') }}">Inicio</a>
+                <span aria-hidden="true">&gt;</span>
+                <a href="{{ route('web.news.index') }}">Novedades</a>
+                <span aria-hidden="true">&gt;</span>
+                <span>{{ $post->title }}</span>
+            </nav>
 
             @if ($post->category)
                 <p class="nm-news-card__category">{{ $post->category->name }}</p>

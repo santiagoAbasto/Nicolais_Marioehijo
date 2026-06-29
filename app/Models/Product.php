@@ -20,6 +20,7 @@ class Product extends Model
         'sku',
         'brand',
         'brand_logo_media_id',
+        'rubro',
         'original_code',
         'equivalence_code',
         'oem_code',

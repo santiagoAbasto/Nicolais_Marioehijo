@@ -43,10 +43,17 @@ class HomeController extends Controller
                 ->orderBy('name')
                 ->limit(80)
                 ->pluck('name');
+            $rubros = Product::query()
+                ->whereNotNull('rubro')
+                ->where('rubro', '!=', '')
+                ->distinct()
+                ->orderBy('rubro')
+                ->pluck('rubro');
         } catch (\Throwable) {
             $families = collect();
             $brands = collect();
             $models = collect();
+            $rubros = collect();
         }
 
         try {
@@ -99,6 +106,7 @@ class HomeController extends Controller
             'families' => $families,
             'brands' => $brands,
             'models' => $models,
+            'rubros' => $rubros,
             'aboutSection' => $aboutSection,
             'featuredProducts' => $featuredProducts,
             'homePosts' => $homePosts,

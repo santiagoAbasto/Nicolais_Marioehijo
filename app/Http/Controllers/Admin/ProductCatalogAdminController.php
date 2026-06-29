@@ -91,8 +91,8 @@ class ProductCatalogAdminController extends AdminPlaceholderController
     public function template()
     {
         return response()->streamDownload(function (): void {
-            echo "familia,subfamilia,codigo,descripcion,tipo,precio_lista,precio_con_descuento,precio_venta,cantidad,subtotal,vista_publico,marca,modelo,codigo_original,equivalencia,codigo_oem,descripcion_corta,aplicaciones,observaciones\n";
-            echo "Engranajes,Toyota Hilux,04011-001,Sincronizado de 5° (camisa y maza),Importado,20000,19000,20900,100,1900000,SI,Importado,Toyota Hilux,33301-35080,33301-35080,33301-35080,Repuestos automotores,Caja de cambios,Importado desde lista inicial\n";
+            echo "familia,rubro,subfamilia,codigo,descripcion,tipo,precio_lista,precio_con_descuento,precio_venta,cantidad,subtotal,vista_publico,marca,modelo,codigo_original,equivalencia,codigo_oem,descripcion_corta,aplicaciones,observaciones\n";
+            echo "Engranajes,01 CAJA FIAT MLGU,Toyota Hilux,04011-001,Sincronizado de 5° (camisa y maza),Importado,20000,19000,20900,100,1900000,SI,Importado,Toyota Hilux,33301-35080,33301-35080,33301-35080,Repuestos automotores,Caja de cambios,Importado desde lista inicial\n";
         }, 'template-productos.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);

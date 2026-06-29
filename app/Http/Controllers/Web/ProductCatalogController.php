@@ -34,6 +34,22 @@ class ProductCatalogController extends Controller
             return $this->showProduct($product);
         }
 
+        $privateProduct = Product::query()
+            ->where('slug', $lineSlug)
+            ->where('is_active', false)
+            ->first();
+
+        if ($privateProduct) {
+            $publicProduct = Product::query()
+                ->where('is_active', true)
+                ->whereHas('relatedProducts', fn ($query) => $query->whereKey($privateProduct->id))
+                ->first();
+
+            if ($publicProduct) {
+                return $this->showProduct($publicProduct);
+            }
+        }
+
         $family = ProductFamily::query()
             ->where('slug', $lineSlug)
             ->where('is_active', true)
@@ -98,7 +114,8 @@ class ProductCatalogController extends Controller
                     ->orWhere('sku', 'like', $needle)
                     ->orWhere('original_code', 'like', $needle)
                     ->orWhere('equivalence_code', 'like', $needle)
-                    ->orWhere('oem_code', 'like', $needle);
+                    ->orWhere('oem_code', 'like', $needle)
+                    ->orWhere('rubro', 'like', $needle);
             });
         }
 
@@ -117,6 +134,10 @@ class ProductCatalogController extends Controller
 
         if ($request->filled('oem')) {
             $query->where('oem_code', 'like', '%'.$request->string('oem')->trim().'%');
+        }
+
+        if ($request->filled('rubro')) {
+            $query->where('rubro', $request->query('rubro'));
         }
 
         if ($request->filled('model')) {
@@ -151,6 +172,12 @@ class ProductCatalogController extends Controller
             'featured' => $featured,
             'selectedFamily' => $selectedFamily,
             'brands' => Product::query()->whereNotNull('brand')->distinct()->orderBy('brand')->pluck('brand'),
+            'rubros' => Product::query()
+                ->whereNotNull('rubro')
+                ->where('rubro', '!=', '')
+                ->distinct()
+                ->orderBy('rubro')
+                ->pluck('rubro'),
             'models' => ProductSubfamily::query()
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -173,20 +200,53 @@ class ProductCatalogController extends Controller
             'relatedProducts.brandLogoMedia',
         ]);
 
-        $related = $product->relatedProducts->take(4);
+        $equivalences = $product->relatedProducts
+            ->sortBy(fn (Product $related) => $related->pivot?->sort_order ?? $related->sku ?? $related->id)
+            ->values();
 
-        if ($related->isEmpty()) {
-            $related = Product::query()
-                ->with(['family', 'mainMedia', 'brandLogoMedia'])
+        if ($equivalences->isEmpty()) {
+            $equivalences = Product::query()
+                ->with(['brandLogoMedia'])
                 ->where('is_active', true)
-                ->whereKeyNot($product->id)
-                ->where('product_family_id', $product->product_family_id)
-                ->limit(4)
+                ->where(function ($query) use ($product): void {
+                    if ($product->sku) {
+                        $query->orWhere('sku', $product->sku);
+                    }
+
+                    $query->orWhere(function ($inner) use ($product): void {
+                        $inner->where('name', $product->name);
+
+                        if ($product->rubro) {
+                            $inner->where('rubro', $product->rubro);
+                        }
+                    });
+                })
+                ->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [$product->id])
+                ->orderBy('brand')
+                ->orderBy('sku')
                 ->get();
         }
 
+        $related = Product::query()
+            ->with(['family', 'mainMedia', 'brandLogoMedia'])
+            ->where('is_active', true)
+            ->whereKeyNot($product->id)
+            ->where(function ($query) use ($product): void {
+                if ($product->product_subfamily_id) {
+                    $query->where('product_subfamily_id', $product->product_subfamily_id);
+                }
+
+                $query->orWhere('product_family_id', $product->product_family_id);
+            })
+            ->orderByRaw('CASE WHEN product_subfamily_id = ? THEN 0 ELSE 1 END', [$product->product_subfamily_id])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->limit(4)
+            ->get();
+
         return view('web.products.show', [
             'product' => $product,
+            'equivalences' => $equivalences,
             'related' => $related,
         ]);
     }

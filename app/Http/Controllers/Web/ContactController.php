@@ -20,15 +20,7 @@ class ContactController extends Controller
 {
     public function show(Request $request): View
     {
-        $product = null;
-
-        if ($request->filled('producto')) {
-            $product = Product::query()
-                ->with(['family', 'mainMedia'])
-                ->where('slug', (string) $request->string('producto'))
-                ->where('is_active', true)
-                ->first();
-        }
+        $product = $this->resolveProduct($request->query('producto'));
 
         $contentSection = SiteSection::query()
             ->where('page_key', 'contacto')
@@ -60,15 +52,7 @@ class ContactController extends Controller
             'product_slug' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $product = null;
-
-        if (! empty($data['product_slug'])) {
-            $product = Product::query()
-                ->with('family')
-                ->where('slug', $data['product_slug'])
-                ->where('is_active', true)
-                ->first();
-        }
+        $product = $this->resolveProduct($data['product_slug'] ?? null);
 
         $message = trim((string) ($data['message'] ?? ''));
 
@@ -129,5 +113,28 @@ class ContactController extends Controller
         return redirect()
             ->route('web.contact.show', $product ? ['producto' => $product->slug] : [])
             ->with('status', 'Recibimos tu consulta. Te vamos a responder a la brevedad.');
+    }
+
+    protected function resolveProduct(mixed $identifier): ?Product
+    {
+        $identifier = trim((string) $identifier);
+
+        if ($identifier === '') {
+            return null;
+        }
+
+        return Product::query()
+            ->with(['family', 'mainMedia'])
+            ->where(function ($query) use ($identifier): void {
+                $query->where('slug', $identifier)
+                    ->orWhere('sku', $identifier);
+
+                if (ctype_digit($identifier)) {
+                    $query->orWhere('id', (int) $identifier);
+                }
+            })
+            ->orderByDesc('is_active')
+            ->orderBy('id')
+            ->first();
     }
 }

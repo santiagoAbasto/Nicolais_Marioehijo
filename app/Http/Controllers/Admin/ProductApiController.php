@@ -63,6 +63,7 @@ class ProductApiController extends AdminPlaceholderController
             'sku' => ['nullable', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:80'],
             'brand_logo_media_id' => ['nullable', 'exists:media_assets,id'],
+            'rubro' => ['nullable', 'string', 'max:255'],
             'original_code' => ['nullable', 'string', 'max:255'],
             'equivalence_code' => ['nullable', 'string', 'max:255'],
             'oem_code' => ['nullable', 'string', 'max:255'],

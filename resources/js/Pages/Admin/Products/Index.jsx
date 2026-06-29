@@ -154,6 +154,7 @@ function emptyProductForm(product = null) {
         slug: product?.slug ?? "",
         sku: product?.sku ?? "",
         brand: product?.brand ?? "",
+        rubro: product?.rubro ?? "",
         original_code: product?.original_code ?? "",
         equivalence_code: product?.equivalence_code ?? "",
         oem_code: product?.oem_code ?? "",
@@ -1401,6 +1402,7 @@ function ProductModal({
                 slug: slugify(form.name),
                 sku: form.sku || null,
                 brand: form.brand || null,
+                rubro: form.rubro || null,
                 original_code: form.original_code || null,
                 equivalence_code: form.equivalence_code || null,
                 oem_code: form.oem_code || null,
@@ -1539,7 +1541,7 @@ function ProductModal({
                         </Field>
                     </div>
 
-                    <div className="grid gap-5 xl:grid-cols-4">
+                    <div className="grid gap-5 xl:grid-cols-5">
                         <Field label="SKU">
                             <TextInput
                                 value={form.sku}
@@ -1559,6 +1561,18 @@ function ProductModal({
                                     setForm((current) => ({
                                         ...current,
                                         brand: event.target.value,
+                                    }))
+                                }
+                            />
+                        </Field>
+
+                        <Field label="Rubro">
+                            <TextInput
+                                value={form.rubro}
+                                onChange={(event) =>
+                                    setForm((current) => ({
+                                        ...current,
+                                        rubro: event.target.value,
                                     }))
                                 }
                             />
@@ -1989,6 +2003,8 @@ export default function ProductsIndex({
     const [editingProductId, setEditingProductId] = useState(null);
     const [importFile, setImportFile] = useState(null);
     const [importing, setImporting] = useState(false);
+    const [imageImportFiles, setImageImportFiles] = useState([]);
+    const [importingImages, setImportingImages] = useState(false);
 
     useEffect(() => {
         setTab(initialTab && initialTab !== "cover" ? initialTab : "products");
@@ -2020,6 +2036,7 @@ export default function ProductsIndex({
                     product.name,
                     product.sku,
                     product.brand,
+                    product.rubro,
                     product.family_name,
                     product.subfamily_name,
                     product.original_code,
@@ -2176,6 +2193,48 @@ export default function ProductsIndex({
             );
         } finally {
             setImporting(false);
+        }
+    };
+
+    const runImageImport = async () => {
+        if (!imageImportFiles.length) {
+            emitAdminToast("Seleccioná una o más imágenes para importar.", "error");
+            return;
+        }
+
+        setImportingImages(true);
+
+        try {
+            const payload = new FormData();
+            imageImportFiles.forEach((file) => payload.append("images[]", file));
+
+            const response = await axios.post(
+                "/admin/api/product-import/images",
+                payload,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                },
+            );
+
+            const summary = response.data.summary ?? {};
+            const unmatchedCount = Array.isArray(summary.unmatched)
+                ? summary.unmatched.length
+                : (summary.unmatched ?? 0);
+            emitAdminToast(
+                `Imágenes importadas. Archivos: ${summary.uploaded ?? 0}, productos vinculados: ${summary.matched_products ?? 0}, sin match: ${unmatchedCount}.`,
+            );
+            setImageImportFiles([]);
+            reloadPage();
+        } catch (error) {
+            emitAdminToast(
+                error?.response?.data?.message ||
+                    "No se pudo ejecutar la importación de imágenes.",
+                "error",
+            );
+        } finally {
+            setImportingImages(false);
         }
     };
 
@@ -2572,7 +2631,7 @@ export default function ProductsIndex({
                                     onChange={(event) =>
                                         setProductSearch(event.target.value)
                                     }
-                                    placeholder="Buscar por nombre, SKU, código original, OEM o equivalencia"
+                                    placeholder="Buscar por nombre, SKU, rubro, código original, OEM o equivalencia"
                                     className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 pl-12 pr-12 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#25A7CA] focus:bg-white focus:ring-4 focus:ring-[#25A7CA]/10"
                                 />
                                 {productSearch ? (
@@ -2668,7 +2727,7 @@ export default function ProductsIndex({
 
                         {filteredProducts.length ? (
                             <div className="overflow-x-auto">
-                                <table className="min-w-[1600px] text-left text-sm">
+                                <table className="min-w-[1700px] text-left text-sm">
                                     <thead>
                                         <tr className="border-b border-slate-200 text-slate-500">
                                             <th className="px-4 py-3 font-semibold">Producto</th>
@@ -2676,6 +2735,7 @@ export default function ProductsIndex({
                                             <th className="px-4 py-3 font-semibold">Subfamilia</th>
                                             <th className="px-4 py-3 font-semibold">SKU</th>
                                             <th className="px-4 py-3 font-semibold">Marca</th>
+                                            <th className="px-4 py-3 font-semibold">Rubro</th>
                                             <th className="px-4 py-3 font-semibold">Cód. original</th>
                                             <th className="px-4 py-3 font-semibold">Equivalencia</th>
                                             <th className="px-4 py-3 font-semibold">OEM</th>
@@ -2719,6 +2779,7 @@ export default function ProductsIndex({
                                                 <td className="px-4 py-4 text-slate-600">{item.subfamily_name || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.sku || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.brand || "-"}</td>
+                                                <td className="px-4 py-4 text-slate-600">{item.rubro || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.original_code || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.equivalence_code || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.oem_code || "-"}</td>
@@ -2782,7 +2843,7 @@ export default function ProductsIndex({
                                 }
                                 description={
                                     products.length
-                                        ? "Probá buscar por nombre, SKU, código original, OEM o equivalencia."
+                                        ? "Probá buscar por nombre, SKU, rubro, código original, OEM o equivalencia."
                                         : "Creá el primer producto o usá el importador masivo para cargar el catálogo."
                                 }
                             />
@@ -2841,6 +2902,23 @@ export default function ProductsIndex({
                                     />
                                 </Field>
 
+                                <Field
+                                    label="Imágenes por código"
+                                    hint="El nombre del archivo se normaliza sin puntos, guiones ni espacios. Ejemplo: 01.k.200 coincide con 01k200."
+                                >
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(event) =>
+                                            setImageImportFiles(
+                                                Array.from(event.target.files ?? []),
+                                            )
+                                        }
+                                        className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-[#0072BB]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#0072BB] hover:file:bg-[#0072BB]/15"
+                                    />
+                                </Field>
+
                                 <div className="flex flex-wrap gap-3">
                                     <button
                                         type="button"
@@ -2859,6 +2937,18 @@ export default function ProductsIndex({
                                         <Icon icon="solar:download-outline" width={18} />
                                         Bajar template
                                     </a>
+
+                                    <button
+                                        type="button"
+                                        onClick={runImageImport}
+                                        disabled={importingImages}
+                                        className="inline-flex items-center gap-2 rounded-2xl border border-[#0072BB] bg-white px-5 py-3 text-sm font-semibold text-[#0072BB] transition hover:bg-[#0072BB] hover:text-white disabled:opacity-60"
+                                    >
+                                        <Icon icon="solar:gallery-add-outline" width={18} />
+                                        {importingImages
+                                            ? "Importando imágenes..."
+                                            : "Importar imágenes"}
+                                    </button>
                                 </div>
                             </div>
 

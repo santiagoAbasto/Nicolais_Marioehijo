@@ -9,6 +9,7 @@ use App\Models\ProductSubfamily;
 use App\Support\CmsSecurity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -37,6 +38,80 @@ class ProductImportController extends AdminPlaceholderController
         return response()->json(['summary' => $summary]);
     }
 
+    public function images(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'images' => ['required', 'array', 'min:1', 'max:300'],
+            'images.*' => [
+                'required',
+                'file',
+                'mimes:jpg,jpeg,png,webp,gif',
+                'mimetypes:'.implode(',', CmsSecurity::safeImageMimeTypes()),
+                'max:10240',
+            ],
+        ]);
+
+        $summary = [
+            'uploaded' => 0,
+            'matched_products' => 0,
+            'unmatched' => [],
+        ];
+
+        foreach ($validated['images'] as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $rawName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $imageKey = $this->productImageKey($rawName);
+            $extension = strtolower($file->extension() ?: $file->getClientOriginalExtension() ?: 'jpg');
+            $storedName = $imageKey.'-'.Str::lower(Str::random(6)).'.'.$extension;
+            $path = $file->storeAs('uploads/product-images/'.now()->format('Y/m'), $storedName, 'public');
+
+            $media = MediaAsset::query()->create([
+                'type' => 'image',
+                'disk' => 'public',
+                'path' => $path,
+                'title' => $rawName,
+                'alt_text' => 'Imagen producto '.$rawName,
+                'mime_type' => Storage::disk('public')->mimeType($path),
+                'extension' => $extension,
+                'size_bytes' => Storage::disk('public')->size($path),
+            ]);
+
+            $products = Product::query()
+                ->whereRaw("LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(sku, ''), '.', ''), '-', ''), ' ', ''), '/', ''), '_', '')) = ?", [$imageKey])
+                ->get();
+
+            if ($products->isEmpty()) {
+                $summary['unmatched'][] = $file->getClientOriginalName();
+                $summary['uploaded']++;
+                continue;
+            }
+
+            foreach ($products as $product) {
+                $hadMainMedia = (bool) $product->main_media_id;
+
+                if (! $hadMainMedia) {
+                    $product->update(['main_media_id' => $media->id]);
+                }
+
+                $product->media()->firstOrCreate(
+                    ['media_id' => $media->id],
+                    [
+                        'sort_order' => $this->sortLetter($product->media()->count()),
+                        'is_primary' => ! $hadMainMedia,
+                    ]
+                );
+            }
+
+            $summary['uploaded']++;
+            $summary['matched_products'] += $products->count();
+        }
+
+        return response()->json(['summary' => $summary]);
+    }
+
     public function importFilePath(string $path, string $name): array
     {
         $brand = $this->brandFromFilename($name);
@@ -48,6 +123,7 @@ class ProductImportController extends AdminPlaceholderController
         $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
         $headings = $this->resolveHeadings($rows[0] ?? []);
         $currentSection = $brand;
+        $currentRubro = null;
         $created = ['families' => 0, 'subfamilies' => 0, 'products' => 0];
 
         foreach ($rows as $index => $row) {
@@ -62,11 +138,16 @@ class ProductImportController extends AdminPlaceholderController
             }
 
             if ($headings !== []) {
-                $parsed = $this->parseMappedProductRow($row, $headings, $brand, $currentSection);
+                $parsed = $this->parseMappedProductRow($row, $headings, $brand, $currentSection, $currentRubro);
                 if (! $parsed) {
                     continue;
                 }
                 $currentSection = $parsed['subfamily'];
+                $currentRubro = $parsed['rubro'] ?: $currentRubro;
+            } elseif ($this->isFurconRubroRow($values)) {
+                $currentRubro = $this->cleanRubro($values);
+                $currentSection = $currentRubro ?: $currentSection;
+                continue;
             } elseif ($this->isSectionRow($values)) {
                 $currentSection = $this->cleanSection($values[0]);
                 continue;
@@ -75,7 +156,7 @@ class ProductImportController extends AdminPlaceholderController
                     continue;
                 }
 
-                $parsed = $this->parseProductRow($values, $brand);
+                $parsed = $this->parseProductRow($values, $brand, $currentSection, $currentRubro);
                 if (! $parsed) {
                     continue;
                 }
@@ -118,32 +199,42 @@ class ProductImportController extends AdminPlaceholderController
                 $created['subfamilies']++;
             }
 
-            $existingProduct = Product::query()->where('sku', $parsed['code'])->first();
-            $product = Product::query()->updateOrCreate(
-                ['sku' => $parsed['code']],
-                [
-                    'product_family_id' => $family->id,
-                    'product_subfamily_id' => $subfamily->id,
-                    'name' => $parsed['description'],
-                    'slug' => $existingProduct?->slug ?: $this->uniqueProductSlug($parsed['code'].' '.$parsed['description']),
-                    'brand' => $parsed['brand'],
-                    'brand_logo_media_id' => $brandLogoId,
-                    'original_code' => $parsed['original_code'],
-                    'equivalence_code' => $parsed['equivalence_code'],
-                    'oem_code' => $parsed['oem_code'],
-                    'price' => $parsed['price'],
-                    'discount_price' => $parsed['discount_price'],
-                    'short_description' => $parsed['short_description'],
-                    'description' => $parsed['long_description'],
-                    'applications' => $parsed['applications'],
-                    'observations' => $parsed['price_label'],
-                    'main_media_id' => $brandImageId ?: $this->nextImageId(),
-                    'sort_order' => $this->sortLetter($index),
-                    'is_active' => $parsed['is_active'],
-                    'is_featured_home' => $created['products'] < 12,
-                    'is_featured_family' => true,
-                ]
-            );
+            $parsedBrandLogoId = $this->brandLogoId($parsed['brand']);
+            $parsedBrandImageId = $this->brandImageId($parsed['brand']);
+            $existingProduct = $this->existingProductForImport($parsed);
+            $productData = [
+                'product_family_id' => $family->id,
+                'product_subfamily_id' => $subfamily->id,
+                'name' => $parsed['description'],
+                'slug' => $existingProduct?->slug ?: $this->uniqueProductSlug(implode(' ', array_filter([$parsed['code'], $parsed['brand'], $parsed['rubro'], $parsed['description']]))),
+                'sku' => $parsed['code'],
+                'brand' => $parsed['brand'],
+                'brand_logo_media_id' => $parsedBrandLogoId ?: $brandLogoId ?: $existingProduct?->brand_logo_media_id,
+                'rubro' => $parsed['rubro'],
+                'original_code' => $parsed['original_code'],
+                'equivalence_code' => $parsed['equivalence_code'],
+                'oem_code' => $parsed['oem_code'],
+                'price' => $parsed['price'],
+                'discount_price' => $parsed['discount_price'],
+                'short_description' => $parsed['short_description'],
+                'description' => $parsed['long_description'],
+                'applications' => $parsed['applications'],
+                'observations' => $parsed['price_label'],
+                'main_media_id' => $existingProduct?->main_media_id ?: ($parsedBrandImageId ?: $brandImageId ?: $this->nextImageId()),
+                'sort_order' => $existingProduct?->sort_order ?: $this->sortLetter($index),
+                'is_active' => $parsed['is_active'] && $parsed['price'] === null && $parsed['discount_price'] === null,
+                'is_featured_home' => $existingProduct?->is_featured_home ?? $created['products'] < 12,
+                'is_featured_family' => $existingProduct?->is_featured_family ?? true,
+            ];
+
+            if ($existingProduct) {
+                $existingProduct->update($productData);
+                $product = $existingProduct;
+            } else {
+                $product = Product::query()->create($productData);
+            }
+
+            $this->linkRelatedProduct($product, $parsed['related_code'] ?? null);
 
             if ($product->wasRecentlyCreated) {
                 $created['products']++;
@@ -154,6 +245,24 @@ class ProductImportController extends AdminPlaceholderController
             ...$created,
             'brand' => $brand,
         ];
+    }
+
+    protected function existingProductForImport(array $parsed): ?Product
+    {
+        $hasPrice = $parsed['price'] !== null || $parsed['discount_price'] !== null;
+
+        return Product::query()
+            ->where('sku', $parsed['code'])
+            ->where('brand', $parsed['brand'])
+            ->when($hasPrice, function ($query): void {
+                $query->where('is_active', false);
+            }, function ($query): void {
+                $query->where('is_active', true)
+                    ->whereNull('price')
+                    ->whereNull('discount_price');
+            })
+            ->orderBy('id')
+            ->first();
     }
 
     protected function compactRow(array $row): array
@@ -171,7 +280,7 @@ class ProductImportController extends AdminPlaceholderController
             'familia', 'subfamilia', 'codigo', 'descripcion', 'tipo', 'precio_lista',
             'precio_con_descuento', 'precio_venta', 'cantidad', 'subtotal', 'vista_publico',
             'marca', 'modelo', 'codigo_original', 'equivalencia', 'codigo_oem',
-            'descripcion_corta', 'aplicaciones', 'observaciones',
+            'descripcion_corta', 'aplicaciones', 'observaciones', 'rubro',
         ];
 
         $matched = array_intersect($known, $normalized);
@@ -187,7 +296,7 @@ class ProductImportController extends AdminPlaceholderController
         $value = Str::of($value)->ascii()->lower()->replaceMatches('/[^a-z0-9]+/', '_')->trim('_')->toString();
 
         return match ($value) {
-            'cod', 'codigo_nm', 'sku', 'n_nicolais', 'numero_nicolais' => 'codigo',
+            'cod', 'codigo_nm', 'sku', 'n_nicolais', 'numero_nicolais', 'n_nicolais_' => 'codigo',
             'nombre', 'producto', 'detalle' => 'descripcion',
             'modelo' => 'modelo',
             'precio', 'lista' => 'precio_lista',
@@ -234,21 +343,33 @@ class ProductImportController extends AdminPlaceholderController
         return count($values) >= 3 && preg_match('/[0-9]/', $values[0]);
     }
 
-    protected function parseProductRow(array $values, string $brand): ?array
+    protected function isFurconRubroRow(array $values): bool
+    {
+        return Str::upper($values[0] ?? '') === 'RUBRO:';
+    }
+
+    protected function parseProductRow(array $values, string $brand, string $currentSection, ?string $currentRubro): ?array
     {
         $priceLabel = end($values);
-        $price = is_numeric(str_replace(',', '.', $priceLabel))
-            ? (float) str_replace(',', '.', $priceLabel)
-            : null;
+        $price = null;
 
-        if (count($values) >= 4) {
+        $relatedCode = null;
+
+        if (Str::startsWith(Str::upper($values[0]), 'NM') && count($values) >= 4) {
             $code = $values[0];
-            $original = $values[1];
-            $description = implode(' ', array_slice($values, 2, -1));
+            $original = $values[1] ?? null;
+            $description = $values[2] ?? null;
+            $relatedCode = $values[count($values) - 1] ?? null;
+        } elseif (Str::startsWith(Str::upper($values[0]), 'NM') && count($values) === 3) {
+            $code = $values[0];
+            $original = null;
+            $description = $values[1] ?? null;
+            $relatedCode = $values[2] ?? null;
         } else {
             $code = $values[0];
             $original = null;
             $description = $values[1] ?? null;
+            $price = $this->decimalValue($priceLabel);
         }
 
         if (! $code || ! $description) {
@@ -258,7 +379,8 @@ class ProductImportController extends AdminPlaceholderController
         return [
             'code' => Str::limit($code, 250, ''),
             'family' => null,
-            'subfamily' => $this->cleanSection($description),
+            'rubro' => $currentRubro,
+            'subfamily' => $this->cleanSection($currentSection ?: $description),
             'brand' => $brand,
             'original_code' => $original ? Str::limit($original, 250, '') : null,
             'equivalence_code' => $original ? Str::limit($original, 250, '') : null,
@@ -270,11 +392,12 @@ class ProductImportController extends AdminPlaceholderController
             'price' => $price,
             'discount_price' => null,
             'price_label' => $priceLabel,
+            'related_code' => $relatedCode ? Str::limit($relatedCode, 250, '') : null,
             'is_active' => true,
         ];
     }
 
-    protected function parseMappedProductRow(array $row, array $headings, string $defaultBrand, string $currentSection): ?array
+    protected function parseMappedProductRow(array $row, array $headings, string $defaultBrand, string $currentSection, ?string $currentRubro): ?array
     {
         $get = function (string $key) use ($row, $headings): ?string {
             $index = array_search($key, $headings, true);
@@ -301,6 +424,7 @@ class ProductImportController extends AdminPlaceholderController
         return [
             'code' => Str::limit($code, 250, ''),
             'family' => $get('familia'),
+            'rubro' => $get('rubro') ?? $currentRubro,
             'subfamily' => $subfamily ?: 'General',
             'brand' => $brand ?: 'Importado',
             'original_code' => Str::limit((string) ($get('codigo_original') ?? $get('equivalencia') ?? $get('codigo_oem') ?? ''), 250, ''),
@@ -313,8 +437,42 @@ class ProductImportController extends AdminPlaceholderController
             'price' => $price,
             'discount_price' => $discountPrice,
             'price_label' => $this->buildPriceObservation($type, $priceLabel, $get('precio_con_descuento'), $get('precio_venta'), $get('cantidad'), $get('subtotal')),
+            'related_code' => null,
             'is_active' => ! in_array(Str::lower((string) $isPublic), ['no', '0', 'false', 'n'], true),
         ];
+    }
+
+    protected function linkRelatedProduct(Product $product, ?string $relatedCode): void
+    {
+        $relatedCode = trim((string) $relatedCode);
+
+        if ($relatedCode === '') {
+            return;
+        }
+
+        $codes = preg_split('/\s*(?:\+|\/)\s*/', $relatedCode) ?: [];
+
+        foreach ($codes as $code) {
+            $code = trim($code);
+
+            if ($code === '') {
+                continue;
+            }
+
+            $related = Product::query()
+                ->where('sku', $code)
+                ->orderByRaw('price IS NULL')
+                ->orderBy('id')
+                ->first();
+
+            if (! $related || $related->is($product)) {
+                continue;
+            }
+
+            $product->relatedProducts()->syncWithoutDetaching([
+                $related->id => ['sort_order' => $this->sortLetter($product->relatedProducts()->count())],
+            ]);
+        }
     }
 
     protected function decimalValue(?string $value): ?float
@@ -323,9 +481,29 @@ class ProductImportController extends AdminPlaceholderController
             return null;
         }
 
-        $clean = str_replace(['$', ' '], '', $value);
-        $clean = str_replace('.', '', $clean);
-        $clean = str_replace(',', '.', $clean);
+        $clean = preg_replace('/[^\d,.\-]/', '', $value);
+
+        if ($clean === null || $clean === '' || $clean === '-' || $clean === ',' || $clean === '.') {
+            return null;
+        }
+
+        $lastComma = strrpos($clean, ',');
+        $lastDot = strrpos($clean, '.');
+
+        if ($lastComma !== false && $lastDot !== false) {
+            if ($lastComma > $lastDot) {
+                $clean = str_replace('.', '', $clean);
+                $clean = str_replace(',', '.', $clean);
+            } else {
+                $clean = str_replace(',', '', $clean);
+            }
+        } elseif ($lastComma !== false) {
+            $clean = preg_match('/,\d{1,2}$/', $clean)
+                ? str_replace(',', '.', $clean)
+                : str_replace(',', '', $clean);
+        } elseif ($lastDot !== false && ! preg_match('/\.\d{1,2}$/', $clean)) {
+            $clean = str_replace('.', '', $clean);
+        }
 
         return is_numeric($clean) ? (float) $clean : null;
     }
@@ -354,6 +532,23 @@ class ProductImportController extends AdminPlaceholderController
     protected function cleanSection(string $value): string
     {
         return trim(str_replace(['…. Continuación', '... Continuacion'], '', $value));
+    }
+
+    protected function cleanRubro(array $values): ?string
+    {
+        $value = trim(implode(' ', array_slice($values, 1)));
+        $value = preg_replace('/\s+/', ' ', (string) $value);
+
+        return $value !== '' ? $value : null;
+    }
+
+    protected function productImageKey(string $value): string
+    {
+        return Str::of($value)
+            ->ascii()
+            ->lower()
+            ->replaceMatches('/[^a-z0-9]+/', '')
+            ->toString();
     }
 
     protected function brandFromFilename(string $name): string
