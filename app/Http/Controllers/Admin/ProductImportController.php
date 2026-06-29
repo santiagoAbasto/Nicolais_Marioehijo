@@ -54,16 +54,34 @@ class ProductImportController extends AdminPlaceholderController
         $summary = [
             'uploaded' => 0,
             'matched_products' => 0,
+            'matched_files' => [],
             'unmatched' => [],
+            'errors' => [],
         ];
+        $placeholderMediaIds = $this->brandPlaceholderMediaIds();
 
         foreach ($validated['images'] as $file) {
             if (! $file instanceof UploadedFile) {
+                $summary['errors'][] = [
+                    'file' => 'Archivo desconocido',
+                    'reason' => 'El archivo no llegó como una imagen válida.',
+                ];
+
                 continue;
             }
 
             $rawName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $imageKey = $this->productImageKey($rawName);
+
+            if ($imageKey === '') {
+                $summary['errors'][] = [
+                    'file' => $file->getClientOriginalName(),
+                    'reason' => 'El nombre del archivo no contiene un código usable para matchear.',
+                ];
+
+                continue;
+            }
+
             $extension = strtolower($file->extension() ?: $file->getClientOriginalExtension() ?: 'jpg');
             $storedName = $imageKey.'-'.Str::lower(Str::random(6)).'.'.$extension;
             $path = $file->storeAs('uploads/product-images/'.now()->format('Y/m'), $storedName, 'public');
@@ -84,15 +102,20 @@ class ProductImportController extends AdminPlaceholderController
                 ->get();
 
             if ($products->isEmpty()) {
-                $summary['unmatched'][] = $file->getClientOriginalName();
+                $summary['unmatched'][] = [
+                    'file' => $file->getClientOriginalName(),
+                    'normalized_code' => $imageKey,
+                    'reason' => 'No existe ningún producto con ese código/SKU normalizado.',
+                ];
                 $summary['uploaded']++;
                 continue;
             }
 
             foreach ($products as $product) {
-                $hadMainMedia = (bool) $product->main_media_id;
+                $shouldUseAsMain = ! $product->main_media_id
+                    || in_array((int) $product->main_media_id, $placeholderMediaIds, true);
 
-                if (! $hadMainMedia) {
+                if ($shouldUseAsMain) {
                     $product->update(['main_media_id' => $media->id]);
                 }
 
@@ -100,13 +123,32 @@ class ProductImportController extends AdminPlaceholderController
                     ['media_id' => $media->id],
                     [
                         'sort_order' => $this->sortLetter($product->media()->count()),
-                        'is_primary' => ! $hadMainMedia,
+                        'is_primary' => $shouldUseAsMain,
                     ]
                 );
+
+                if ($shouldUseAsMain) {
+                    $product->media()
+                        ->where('media_id', '!=', $media->id)
+                        ->update(['is_primary' => false]);
+                }
             }
 
             $summary['uploaded']++;
             $summary['matched_products'] += $products->count();
+            $summary['matched_files'][] = [
+                'file' => $file->getClientOriginalName(),
+                'normalized_code' => $imageKey,
+                'products_count' => $products->count(),
+                'products' => $products
+                    ->take(5)
+                    ->map(fn (Product $product) => [
+                        'sku' => $product->sku,
+                        'name' => $product->name,
+                    ])
+                    ->values()
+                    ->all(),
+            ];
         }
 
         return response()->json(['summary' => $summary]);
@@ -574,6 +616,20 @@ class ProductImportController extends AdminPlaceholderController
             ->where('title', 'like', '%'.$title.'%')
             ->latest('id')
             ->value('id');
+    }
+
+    protected function brandPlaceholderMediaIds(): array
+    {
+        return MediaAsset::query()
+            ->where(function ($query) {
+                $query
+                    ->whereIn('path', ['brand/logo.svg', 'brand/logofo.svg'])
+                    ->orWhere('title', 'like', '%Logo 1%')
+                    ->orWhere('title', 'like', '%Logo 2%');
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 
     protected function brandImageId(string $brand): ?int

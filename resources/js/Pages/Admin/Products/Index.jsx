@@ -370,146 +370,6 @@ function EmptyState({ title, description }) {
     );
 }
 
-function BrandImagesPanel({ brands, onSaved }) {
-    const [filesByBrand, setFilesByBrand] = useState({});
-    const [savingBrand, setSavingBrand] = useState("");
-
-    const setBrandFile = (brand, file) => {
-        setFilesByBrand((current) => ({
-            ...current,
-            [brand]: file,
-        }));
-    };
-
-    const saveBrandImage = async (item) => {
-        const file = filesByBrand[item.brand];
-
-        if (!file) {
-            emitAdminToast("Seleccioná una imagen para esa marca.", "error");
-            return;
-        }
-
-        setSavingBrand(item.brand);
-
-        try {
-            const uploaded = await uploadAsset(file, `Imagen marca ${item.brand}`);
-            const response = await axios.post("/admin/api/product-brand-images", {
-                brand: item.brand,
-                media_id: uploaded.id,
-            });
-
-            emitAdminToast(
-                `Imagen asignada a ${response.data.products_count ?? item.products_count} productos de ${item.brand}.`,
-            );
-            setBrandFile(item.brand, null);
-            onSaved(response.data);
-        } catch (error) {
-            emitAdminToast(
-                error?.response?.data?.message ||
-                    "No se pudo asignar la imagen de la marca.",
-                "error",
-            );
-        } finally {
-            setSavingBrand("");
-        }
-    };
-
-    return (
-        <section className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                    <h2 className="text-2xl font-semibold text-slate-900">
-                        Imágenes por marca
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                        Cargá una imagen para cada marca. Al guardar, todos los
-                        productos de esa marca pasan a usar esa imagen.
-                    </p>
-                </div>
-            </div>
-
-            {brands.length ? (
-                <div className="overflow-x-auto">
-                    <table className="min-w-full text-left text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-200 text-slate-500">
-                                <th className="px-4 py-3 font-semibold">Marca</th>
-                                <th className="px-4 py-3 font-semibold">Productos</th>
-                                <th className="px-4 py-3 font-semibold">Imagen actual</th>
-                                <th className="px-4 py-3 font-semibold">Nueva imagen</th>
-                                <th className="px-4 py-3 font-semibold text-right">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {brands.map((item) => (
-                                <tr key={item.brand} className="border-b border-slate-100 align-middle">
-                                    <td className="px-4 py-4">
-                                        <p className="font-semibold text-slate-900">
-                                            {item.brand}
-                                        </p>
-                                    </td>
-                                    <td className="px-4 py-4 text-slate-600">
-                                        {item.products_count}
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        {item.media_url ? (
-                                            <img
-                                                src={item.media_url}
-                                                alt={item.brand}
-                                                className="h-16 w-20 rounded-2xl border border-slate-200 bg-slate-50 object-contain p-1"
-                                            />
-                                        ) : (
-                                            <div className="flex h-16 w-20 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-slate-400">
-                                                <Icon icon="solar:gallery-outline" width={18} />
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(event) =>
-                                                setBrandFile(
-                                                    item.brand,
-                                                    event.target.files?.[0] ?? null,
-                                                )
-                                            }
-                                            className="block w-full min-w-[260px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-[#25A7CA]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#117a98] hover:file:bg-[#25A7CA]/15"
-                                        />
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex justify-end">
-                                            <button
-                                                type="button"
-                                                onClick={() => saveBrandImage(item)}
-                                                disabled={
-                                                    savingBrand === item.brand ||
-                                                    !filesByBrand[item.brand]
-                                                }
-                                                className="inline-flex items-center gap-2 rounded-2xl bg-[#25A7CA] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1d96b8] disabled:opacity-60"
-                                            >
-                                                <Icon icon="solar:gallery-add-outline" width={18} />
-                                                {savingBrand === item.brand
-                                                    ? "Asignando..."
-                                                    : "Asignar a marca"}
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <EmptyState
-                    title="Todavía no hay marcas"
-                    description="Cuando cargues productos con marca, vas a poder asignarles una imagen común desde acá."
-                />
-            )}
-        </section>
-    );
-}
-
 function CoverEditor({ form, onChange, onSave, saving }) {
     const [previewUrl, setPreviewUrl] = useState(form.media_url || "");
 
@@ -2005,9 +1865,12 @@ export default function ProductsIndex({
     const [importing, setImporting] = useState(false);
     const [imageImportFiles, setImageImportFiles] = useState([]);
     const [importingImages, setImportingImages] = useState(false);
+    const [imageImportReport, setImageImportReport] = useState(null);
 
     useEffect(() => {
-        setTab(initialTab && initialTab !== "cover" ? initialTab : "products");
+        const allowedTabs = ["families", "subfamilies", "products", "import"];
+
+        setTab(allowedTabs.includes(initialTab) ? initialTab : "products");
     }, [initialTab]);
 
     const visitTab = (nextTab) => {
@@ -2219,15 +2082,39 @@ export default function ProductsIndex({
             );
 
             const summary = response.data.summary ?? {};
-            const unmatchedCount = Array.isArray(summary.unmatched)
-                ? summary.unmatched.length
-                : (summary.unmatched ?? 0);
+            const unmatchedCount = Array.isArray(summary.unmatched) ? summary.unmatched.length : 0;
+            const errorCount = Array.isArray(summary.errors) ? summary.errors.length : 0;
+            const allMatched = unmatchedCount === 0 && errorCount === 0;
+
+            setImageImportReport(summary);
             emitAdminToast(
-                `Imágenes importadas. Archivos: ${summary.uploaded ?? 0}, productos vinculados: ${summary.matched_products ?? 0}, sin match: ${unmatchedCount}.`,
+                allMatched
+                    ? `Todo matcheó correctamente. Archivos: ${summary.uploaded ?? 0}, productos vinculados: ${summary.matched_products ?? 0}.`
+                    : `Importación con observaciones. Sin match: ${unmatchedCount}, errores: ${errorCount}. Revisá el detalle debajo del selector.`,
+                allMatched ? "success" : "warning",
             );
             setImageImportFiles([]);
             reloadPage();
         } catch (error) {
+            const validationErrors = error?.response?.data?.errors;
+
+            if (validationErrors) {
+                const details = Object.entries(validationErrors).flatMap(([field, messages]) =>
+                    (Array.isArray(messages) ? messages : [messages]).map((message) => ({
+                        file: field,
+                        reason: message,
+                    })),
+                );
+
+                setImageImportReport({
+                    uploaded: 0,
+                    matched_products: 0,
+                    matched_files: [],
+                    unmatched: [],
+                    errors: details,
+                });
+            }
+
             emitAdminToast(
                 error?.response?.data?.message ||
                     "No se pudo ejecutar la importación de imágenes.",
@@ -2366,12 +2253,6 @@ export default function ProductsIndex({
                         icon="solar:archive-outline"
                         label="Productos"
                         onClick={() => visitTab("products")}
-                    />
-                    <TabButton
-                        active={tab === "brand-images"}
-                        icon="solar:gallery-add-outline"
-                        label="Imágenes por marca"
-                        onClick={() => visitTab("brand-images")}
                     />
                     <TabButton
                         active={tab === "import"}
@@ -2851,29 +2732,6 @@ export default function ProductsIndex({
                     </section>
                 ) : null}
 
-                {tab === "brand-images" ? (
-                    <BrandImagesPanel
-                        brands={brands}
-                        onSaved={(updatedBrand) => {
-                            setBrands((current) =>
-                                current.map((item) =>
-                                    item.brand === updatedBrand.brand
-                                        ? {
-                                              ...item,
-                                              media_id: updatedBrand.media_id,
-                                              media_url: updatedBrand.media_url,
-                                              products_count:
-                                                  updatedBrand.products_count ??
-                                                  item.products_count,
-                                          }
-                                        : item,
-                                ),
-                            );
-                            reloadPage();
-                        }}
-                    />
-                ) : null}
-
                 {tab === "import" ? (
                     <section className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
                         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -2903,21 +2761,92 @@ export default function ProductsIndex({
                                 </Field>
 
                                 <Field
-                                    label="Imágenes por código"
-                                    hint="El nombre del archivo se normaliza sin puntos, guiones ni espacios. Ejemplo: 01.k.200 coincide con 01k200."
+                                    label="Imágenes de productos por código"
+                                    hint="Seleccioná todas las fotos juntas. El orden no importa: cada nombre se normaliza sin puntos, guiones ni espacios y se compara contra el código del producto. Si no hay match, queda el placeholder de su marca."
                                 >
                                     <input
                                         type="file"
                                         accept="image/*"
                                         multiple
                                         onChange={(event) =>
-                                            setImageImportFiles(
-                                                Array.from(event.target.files ?? []),
-                                            )
+                                            {
+                                                setImageImportFiles(
+                                                    Array.from(event.target.files ?? []),
+                                                );
+                                                setImageImportReport(null);
+                                            }
                                         }
                                         className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-[#0072BB]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#0072BB] hover:file:bg-[#0072BB]/15"
                                     />
                                 </Field>
+
+                                {imageImportFiles.length ? (
+                                    <div className="rounded-2xl border border-[#0072BB]/20 bg-[#0072BB]/5 px-4 py-3 text-sm text-[#005f9d]">
+                                        {`${imageImportFiles.length} ${
+                                            imageImportFiles.length === 1
+                                                ? "imagen lista"
+                                                : "imágenes listas"
+                                        } para matchear por código.`}
+                                    </div>
+                                ) : null}
+
+                                {imageImportReport ? (
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <span className="font-semibold text-slate-900">
+                                                Reporte de imágenes
+                                            </span>
+                                            <span>
+                                                Archivos procesados: {imageImportReport.uploaded ?? 0}
+                                            </span>
+                                            <span>
+                                                Productos vinculados:{" "}
+                                                {imageImportReport.matched_products ?? 0}
+                                            </span>
+                                        </div>
+
+                                        {Array.isArray(imageImportReport.unmatched) &&
+                                        imageImportReport.unmatched.length ? (
+                                            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                                                <p className="font-semibold">
+                                                    Sin match
+                                                </p>
+                                                <ul className="mt-2 space-y-1">
+                                                    {imageImportReport.unmatched.map((item, index) => (
+                                                        <li key={`${item.file}-${index}`}>
+                                                            {item.file} → código{" "}
+                                                            {item.normalized_code || "sin código"}:{" "}
+                                                            {item.reason}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ) : null}
+
+                                        {Array.isArray(imageImportReport.errors) &&
+                                        imageImportReport.errors.length ? (
+                                            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-red-900">
+                                                <p className="font-semibold">Errores</p>
+                                                <ul className="mt-2 space-y-1">
+                                                    {imageImportReport.errors.map((item, index) => (
+                                                        <li key={`${item.file}-${index}`}>
+                                                            {item.file}: {item.reason}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ) : null}
+
+                                        {(!Array.isArray(imageImportReport.unmatched) ||
+                                            imageImportReport.unmatched.length === 0) &&
+                                        (!Array.isArray(imageImportReport.errors) ||
+                                            imageImportReport.errors.length === 0) ? (
+                                            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 font-semibold text-emerald-800">
+                                                Todo matcheó correctamente.
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                ) : null}
 
                                 <div className="flex flex-wrap gap-3">
                                     <button
