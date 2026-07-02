@@ -32,19 +32,25 @@
                             ->filter()
                             ->unique('id')
                             ->values();
+                        $mainImageUrl = media_asset_url($galleryImages->first())
+                            ?: media_asset_url($product->brandLogoMedia)
+                            ?: asset('images/placeholder-equipment.svg');
+                        $fallbackImageUrl = media_asset_url($product->brandLogoMedia)
+                            ?: asset('images/placeholder-equipment.svg');
                     @endphp
 
                     <div class="product-detail__media">
                         <span class="product-card__badge">{{ $product->brand ?: 'Importado' }}</span>
                         <img
                             data-product-main-image
-                            src="{{ media_asset_url($galleryImages->first()) ?: asset('images/placeholder-equipment.svg') }}"
+                            data-fallback-src="{{ $fallbackImageUrl }}"
+                            src="{{ $mainImageUrl }}"
                             alt="{{ $product->name }}"
                         >
                     </div>
 
                     @if ($galleryImages->count() > 1)
-                        <div class="product-detail__thumbs" aria-label="Imágenes del producto">
+                        <div class="product-detail__thumbs" aria-label="Im&aacute;genes del producto">
                             @foreach ($galleryImages as $index => $media)
                                 <button
                                     type="button"
@@ -68,12 +74,12 @@
                     </div>
 
                     <h1>{{ $product->name }}</h1>
-                    <p>{{ $product->description ?: 'Descripción de producto' }}</p>
+                    <p>{{ $product->description ?: 'Descripci&oacute;n de producto' }}</p>
 
                     <div class="product-detail__variants">
                         @foreach ($equivalences as $equivalence)
                             <div class="product-detail__variant @if($equivalence->is($product)) is-current @endif">
-                                <strong>{{ $equivalence->sku ?: 'Sin código' }}</strong>
+                                <strong>{{ $equivalence->sku ?: 'Sin c&oacute;digo' }}</strong>
                                 <span>{{ $product->name }}</span>
                                 @if ($equivalence->brandLogoMedia)
                                     <img src="{{ media_asset_url($equivalence->brandLogoMedia) }}" alt="{{ $equivalence->brand ?: 'Marca' }}">
@@ -85,7 +91,7 @@
                         @endforeach
                     </div>
 
-                    <a class="download-btn" href="/catalogo">Descargar catálogo</a>
+                    <a class="download-btn" href="/catalogo">Descargar cat&aacute;logo</a>
                 </div>
             </section>
 
@@ -125,11 +131,55 @@
 
 @push('scripts')
     <script nonce="{{ request()->attributes->get('csp-nonce') }}">
+        const productMainImage = document.querySelector('[data-product-main-image]');
+
+        if (productMainImage) {
+            productMainImage.addEventListener('error', () => {
+                if (productMainImage.dataset.fallbackSrc && productMainImage.src !== productMainImage.dataset.fallbackSrc) {
+                    productMainImage.src = productMainImage.dataset.fallbackSrc;
+                }
+            });
+        }
+
+        const handleBrokenProductThumb = (image) => {
+            const thumb = image.closest('[data-product-thumb]');
+
+            if (!thumb || thumb.hidden) {
+                return;
+            }
+
+            const wasActive = thumb.classList.contains('is-active');
+            thumb.hidden = true;
+            thumb.classList.remove('is-active');
+            thumb.setAttribute('aria-pressed', 'false');
+
+            if (!wasActive) {
+                return;
+            }
+
+            const nextThumb = Array.from(document.querySelectorAll('[data-product-thumb]'))
+                .find((candidate) => !candidate.hidden && candidate.dataset.imageSrc);
+
+            if (nextThumb) {
+                nextThumb.click();
+            } else if (productMainImage?.dataset.fallbackSrc) {
+                productMainImage.src = productMainImage.dataset.fallbackSrc;
+            }
+        };
+
+        document.querySelectorAll('[data-product-thumb] img').forEach((image) => {
+            image.addEventListener('error', () => handleBrokenProductThumb(image));
+
+            if (image.complete && image.naturalWidth === 0) {
+                handleBrokenProductThumb(image);
+            }
+        });
+
         document.querySelectorAll('[data-product-thumb]').forEach((button) => {
             button.addEventListener('click', () => {
                 const image = document.querySelector('[data-product-main-image]');
 
-                if (!image || !button.dataset.imageSrc) {
+                if (!image || !button.dataset.imageSrc || button.hidden) {
                     return;
                 }
 

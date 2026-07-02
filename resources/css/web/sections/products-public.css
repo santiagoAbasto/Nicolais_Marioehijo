@@ -586,7 +586,21 @@
     height: 222px;
     border: 0;
     border-radius: 0;
-    background: #d9d9d9 50% / contain no-repeat;
+    background: #ffffff 50% / cover no-repeat;
+}
+
+.product-card__media-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.product-card__media-img--logo {
+    padding: 24px;
+    object-fit: contain;
+    background: #ffffff;
 }
 
 .product-card__badge {

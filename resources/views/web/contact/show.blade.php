@@ -73,7 +73,7 @@
                         <span>Tipo</span>
                     </div>
                     <div class="contact-product__row">
-                        <img src="{{ media_asset_url($product->mainMedia) ?: asset('images/placeholder-equipment.svg') }}" alt="{{ $product->name }}">
+                        <img src="{{ media_asset_url($product->mainMedia) ?: media_asset_url($product->brandLogoMedia) ?: asset('images/placeholder-equipment.svg') }}" alt="{{ $product->name }}">
                         <span>{{ $product->family?->name ?: '-' }}</span>
                         <span>{{ $product->sku ?: '-' }}</span>
                         <span>{{ $product->name }}</span>

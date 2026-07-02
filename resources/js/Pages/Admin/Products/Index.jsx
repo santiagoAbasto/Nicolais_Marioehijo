@@ -6,6 +6,8 @@ import { Icon } from "@iconify/react";
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 
+const IMAGE_IMPORT_BATCH_SIZE = 40;
+
 function mediaUrlFromAsset(asset) {
     if (!asset?.path) {
         return "";
@@ -1866,6 +1868,7 @@ export default function ProductsIndex({
     const [imageImportFiles, setImageImportFiles] = useState([]);
     const [importingImages, setImportingImages] = useState(false);
     const [imageImportReport, setImageImportReport] = useState(null);
+    const [imageImportProgress, setImageImportProgress] = useState(null);
 
     useEffect(() => {
         const allowedTabs = ["families", "subfamilies", "products", "import"];
@@ -2066,22 +2069,94 @@ export default function ProductsIndex({
         }
 
         setImportingImages(true);
+        setImageImportReport(null);
+        setImageImportProgress(null);
 
         try {
-            const payload = new FormData();
-            imageImportFiles.forEach((file) => payload.append("images[]", file));
+            const batches = [];
 
-            const response = await axios.post(
-                "/admin/api/product-import/images",
-                payload,
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                },
-            );
+            for (
+                let index = 0;
+                index < imageImportFiles.length;
+                index += IMAGE_IMPORT_BATCH_SIZE
+            ) {
+                batches.push(imageImportFiles.slice(index, index + IMAGE_IMPORT_BATCH_SIZE));
+            }
 
-            const summary = response.data.summary ?? {};
+            const summary = {
+                uploaded: 0,
+                matched_products: 0,
+                matched_files: [],
+                unmatched: [],
+                errors: [],
+                batches: batches.length,
+                batch_size: IMAGE_IMPORT_BATCH_SIZE,
+            };
+
+            for (const [batchIndex, batch] of batches.entries()) {
+                setImageImportProgress({
+                    current: batchIndex + 1,
+                    total: batches.length,
+                });
+
+                const payload = new FormData();
+                batch.forEach((file) => payload.append("images[]", file));
+
+                try {
+                    const response = await axios.post(
+                        "/admin/api/product-import/images",
+                        payload,
+                        {
+                            headers: {
+                                "Content-Type": "multipart/form-data",
+                            },
+                        },
+                    );
+
+                    const batchSummary = response.data.summary ?? {};
+
+                    summary.uploaded += Number(batchSummary.uploaded ?? 0);
+                    summary.matched_products += Number(batchSummary.matched_products ?? 0);
+                    summary.matched_files.push(
+                        ...(Array.isArray(batchSummary.matched_files)
+                            ? batchSummary.matched_files
+                            : []),
+                    );
+                    summary.unmatched.push(
+                        ...(Array.isArray(batchSummary.unmatched)
+                            ? batchSummary.unmatched
+                            : []),
+                    );
+                    summary.errors.push(
+                        ...(Array.isArray(batchSummary.errors) ? batchSummary.errors : []),
+                    );
+                } catch (error) {
+                    const validationErrors = error?.response?.data?.errors;
+
+                    if (validationErrors) {
+                        const details = Object.entries(validationErrors).flatMap(
+                            ([field, messages]) =>
+                                (Array.isArray(messages) ? messages : [messages]).map(
+                                    (message) => ({
+                                        file: `Tanda ${batchIndex + 1} - ${field}`,
+                                        reason: message,
+                                    }),
+                                ),
+                        );
+
+                        summary.errors.push(...details);
+                        continue;
+                    }
+
+                    summary.errors.push({
+                        file: `Tanda ${batchIndex + 1}`,
+                        reason:
+                            error?.response?.data?.message ||
+                            `No se pudo procesar esta tanda de ${batch.length} imagen(es).`,
+                    });
+                }
+            }
+
             const unmatchedCount = Array.isArray(summary.unmatched) ? summary.unmatched.length : 0;
             const errorCount = Array.isArray(summary.errors) ? summary.errors.length : 0;
             const allMatched = unmatchedCount === 0 && errorCount === 0;
@@ -2096,25 +2171,6 @@ export default function ProductsIndex({
             setImageImportFiles([]);
             reloadPage();
         } catch (error) {
-            const validationErrors = error?.response?.data?.errors;
-
-            if (validationErrors) {
-                const details = Object.entries(validationErrors).flatMap(([field, messages]) =>
-                    (Array.isArray(messages) ? messages : [messages]).map((message) => ({
-                        file: field,
-                        reason: message,
-                    })),
-                );
-
-                setImageImportReport({
-                    uploaded: 0,
-                    matched_products: 0,
-                    matched_files: [],
-                    unmatched: [],
-                    errors: details,
-                });
-            }
-
             emitAdminToast(
                 error?.response?.data?.message ||
                     "No se pudo ejecutar la importación de imágenes.",
@@ -2122,6 +2178,7 @@ export default function ProductsIndex({
             );
         } finally {
             setImportingImages(false);
+            setImageImportProgress(null);
         }
     };
 
@@ -2774,6 +2831,7 @@ export default function ProductsIndex({
                                                     Array.from(event.target.files ?? []),
                                                 );
                                                 setImageImportReport(null);
+                                                setImageImportProgress(null);
                                             }
                                         }
                                         className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-[#0072BB]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#0072BB] hover:file:bg-[#0072BB]/15"
@@ -2786,7 +2844,16 @@ export default function ProductsIndex({
                                             imageImportFiles.length === 1
                                                 ? "imagen lista"
                                                 : "imágenes listas"
-                                        } para matchear por código.`}
+                                        } para matchear por código.`}{" "}
+                                        Se van a procesar en tandas de {IMAGE_IMPORT_BATCH_SIZE} para
+                                        evitar el límite del servidor.
+                                    </div>
+                                ) : null}
+
+                                {importingImages && imageImportProgress ? (
+                                    <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800">
+                                        Procesando tanda {imageImportProgress.current} de{" "}
+                                        {imageImportProgress.total}...
                                     </div>
                                 ) : null}
 
@@ -2802,6 +2869,9 @@ export default function ProductsIndex({
                                             <span>
                                                 Productos vinculados:{" "}
                                                 {imageImportReport.matched_products ?? 0}
+                                            </span>
+                                            <span>
+                                                Tandas: {imageImportReport.batches ?? 1}
                                             </span>
                                         </div>
 
@@ -2875,7 +2945,9 @@ export default function ProductsIndex({
                                     >
                                         <Icon icon="solar:gallery-add-outline" width={18} />
                                         {importingImages
-                                            ? "Importando imágenes..."
+                                            ? imageImportProgress
+                                                ? `Importando ${imageImportProgress.current}/${imageImportProgress.total}...`
+                                                : "Importando imágenes..."
                                             : "Importar imágenes"}
                                     </button>
                                 </div>

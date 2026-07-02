@@ -41,7 +41,7 @@ class ProductImportController extends AdminPlaceholderController
     public function images(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'images' => ['required', 'array', 'min:1', 'max:300'],
+            'images' => ['required', 'array', 'min:1', 'max:1000'],
             'images.*' => [
                 'required',
                 'file',
@@ -264,7 +264,7 @@ class ProductImportController extends AdminPlaceholderController
                 'observations' => $parsed['price_label'],
                 'main_media_id' => $existingProduct?->main_media_id ?: ($parsedBrandImageId ?: $brandImageId ?: $this->nextImageId()),
                 'sort_order' => $existingProduct?->sort_order ?: $this->sortLetter($index),
-                'is_active' => $parsed['is_active'] && $parsed['price'] === null && $parsed['discount_price'] === null,
+                'is_active' => $parsed['is_active'],
                 'is_featured_home' => $existingProduct?->is_featured_home ?? $created['products'] < 12,
                 'is_featured_family' => $existingProduct?->is_featured_family ?? true,
             ];
@@ -291,20 +291,14 @@ class ProductImportController extends AdminPlaceholderController
 
     protected function existingProductForImport(array $parsed): ?Product
     {
-        $hasPrice = $parsed['price'] !== null || $parsed['discount_price'] !== null;
+        $descriptionKey = $this->productImageKey($parsed['description']);
 
         return Product::query()
             ->where('sku', $parsed['code'])
             ->where('brand', $parsed['brand'])
-            ->when($hasPrice, function ($query): void {
-                $query->where('is_active', false);
-            }, function ($query): void {
-                $query->where('is_active', true)
-                    ->whereNull('price')
-                    ->whereNull('discount_price');
-            })
             ->orderBy('id')
-            ->first();
+            ->get()
+            ->first(fn (Product $product): bool => $this->productImageKey($product->name) === $descriptionKey);
     }
 
     protected function compactRow(array $row): array
@@ -625,7 +619,8 @@ class ProductImportController extends AdminPlaceholderController
                 $query
                     ->whereIn('path', ['brand/logo.svg', 'brand/logofo.svg'])
                     ->orWhere('title', 'like', '%Logo 1%')
-                    ->orWhere('title', 'like', '%Logo 2%');
+                    ->orWhere('title', 'like', '%Logo 2%')
+                    ->orWhere('title', 'like', '%Imagen marca%');
             })
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
