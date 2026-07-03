@@ -16,11 +16,8 @@ class ProductApiController extends AdminPlaceholderController
             'family',
             'subfamily',
             'mainMedia',
-            'technicalSheet',
             'media.media',
             'relatedProducts',
-            'specTables.columns',
-            'specTables.rows.values',
         ]));
     }
 
@@ -72,11 +69,7 @@ class ProductApiController extends AdminPlaceholderController
             'short_description' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'applications' => ['nullable', 'string'],
-            'material' => ['nullable', 'string'],
-            'treatment' => ['nullable', 'string'],
-            'observations' => ['nullable', 'string'],
             'main_media_id' => ['nullable', 'exists:media_assets,id'],
-            'technical_sheet_media_id' => ['nullable', 'exists:media_assets,id'],
             'sort_order' => ['nullable', 'string', 'max:20'],
             'is_active' => ['boolean'],
             'is_featured_home' => ['boolean'],
@@ -123,6 +116,10 @@ class ProductApiController extends AdminPlaceholderController
                 ->mapWithKeys(fn ($id, $index) => [(int) $id => ['sort_order' => chr(65 + $index)]])
                 ->all()
         );
+
+        if (! $request->has('spec_tables')) {
+            return;
+        }
 
         $product->specTables()->delete();
 

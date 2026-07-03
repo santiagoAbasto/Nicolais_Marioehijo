@@ -165,9 +165,6 @@ function emptyProductForm(product = null) {
         short_description: product?.short_description ?? "",
         description: product?.description ?? "",
         applications: product?.applications ?? "",
-        material: product?.material ?? "",
-        treatment: product?.treatment ?? "",
-        observations: product?.observations ?? "",
         price: product?.price ?? "",
         discount_price: product?.discount_price ?? "",
         discount_percent:
@@ -176,9 +173,6 @@ function emptyProductForm(product = null) {
         main_media_id: product?.main_media_id ?? null,
         main_media_url: product?.main_media_url ?? "",
         main_media_file: null,
-        technical_sheet_media_id: product?.technical_sheet_media_id ?? null,
-        technical_sheet_url: product?.technical_sheet_url ?? "",
-        technical_sheet_file: null,
         sort_order: product?.sort_order ?? "A",
         is_active: product?.is_active ?? true,
         is_featured_home: product?.is_featured_home ?? false,
@@ -192,7 +186,6 @@ function emptyProductForm(product = null) {
 function mapProductDetails(product) {
     const specTableRows = product?.spec_tables ?? product?.specTables ?? [];
     const mainMedia = product?.main_media ?? product?.mainMedia;
-    const technicalSheet = product?.technical_sheet ?? product?.technicalSheet;
     const relatedProducts = product?.related_products ?? product?.relatedProducts ?? [];
 
     const specTables = specTableRows.map((table) => {
@@ -227,7 +220,6 @@ function mapProductDetails(product) {
     return emptyProductForm({
         ...product,
         main_media_url: mediaUrlFromAsset(mainMedia),
-        technical_sheet_url: mediaUrlFromAsset(technicalSheet),
         gallery: (product?.media ?? []).map((item) => ({
             media_id: item.media_id,
             url: mediaUrlFromAsset(item.media),
@@ -1216,7 +1208,6 @@ function ProductModal({
 
         try {
             let mainMediaId = form.main_media_id;
-            let technicalSheetMediaId = form.technical_sheet_media_id;
 
             if (form.main_media_file) {
                 const uploaded = await uploadAsset(
@@ -1224,14 +1215,6 @@ function ProductModal({
                     `${form.name || "producto"} principal`,
                 );
                 mainMediaId = uploaded.id;
-            }
-
-            if (form.technical_sheet_file) {
-                const uploaded = await uploadAsset(
-                    form.technical_sheet_file,
-                    `${form.name || "producto"} ficha`,
-                );
-                technicalSheetMediaId = uploaded.id;
             }
 
             const mediaRows = [];
@@ -1273,42 +1256,15 @@ function ProductModal({
                 short_description: form.short_description || null,
                 description: form.description || null,
                 applications: form.applications || null,
-                material: form.material || null,
-                treatment: form.treatment || null,
-                observations: form.observations || null,
                 price: form.price === "" ? null : Number(form.price),
                 discount_price: form.discount_price === "" ? null : Number(form.discount_price),
                 main_media_id: mainMediaId,
-                technical_sheet_media_id: technicalSheetMediaId,
                 sort_order: form.sort_order || null,
                 is_active: form.is_active,
                 is_featured_home: form.is_featured_home,
                 is_featured_family: form.is_featured_family,
                 media: mediaRows,
                 related_product_ids: form.related_product_ids,
-                spec_tables: form.spec_tables
-                    .filter(
-                        (table) =>
-                            table.columns.some((column) => column.label.trim() !== "") ||
-                            table.rows.some((row) =>
-                                row.values.some((value) => String(value || "").trim() !== ""),
-                            ),
-                    )
-                    .map((table, tableIndex) => ({
-                        title: table.title || null,
-                        sort_order: String.fromCharCode(65 + tableIndex),
-                        columns: table.columns
-                            .filter((column) => column.label.trim() !== "")
-                            .map((column, columnIndex) => ({
-                                label: column.label,
-                                unit: column.unit || null,
-                                sort_order: String.fromCharCode(65 + columnIndex),
-                            })),
-                        rows: table.rows.map((row, rowIndex) => ({
-                            sort_order: String.fromCharCode(65 + rowIndex),
-                            values: row.values,
-                        })),
-                    })),
             };
 
             if (form.id) {
@@ -1532,47 +1488,6 @@ function ProductModal({
                     </Field>
 
                     <div className="grid gap-5 xl:grid-cols-3">
-                        <Field label="Material">
-                            <TextArea
-                                value={form.material}
-                                onChange={(event) =>
-                                    setForm((current) => ({
-                                        ...current,
-                                        material: event.target.value,
-                                    }))
-                                }
-                                rows={4}
-                            />
-                        </Field>
-
-                        <Field label="Tratamiento">
-                            <TextArea
-                                value={form.treatment}
-                                onChange={(event) =>
-                                    setForm((current) => ({
-                                        ...current,
-                                        treatment: event.target.value,
-                                    }))
-                                }
-                                rows={4}
-                            />
-                        </Field>
-
-                        <Field label="Observaciones">
-                            <TextArea
-                                value={form.observations}
-                                onChange={(event) =>
-                                    setForm((current) => ({
-                                        ...current,
-                                        observations: event.target.value,
-                                    }))
-                                }
-                                rows={4}
-                            />
-                        </Field>
-                    </div>
-
-                    <div className="grid gap-5 xl:grid-cols-3">
                         <Field label="Precio lista">
                             <TextInput
                                 type="number"
@@ -1678,7 +1593,7 @@ function ProductModal({
                         />
                     </div>
 
-                    <div className="grid gap-5 xl:grid-cols-2">
+                    <div className="grid gap-5">
                         <Field label="Imagen principal">
                             <input
                                 type="file"
@@ -1698,34 +1613,6 @@ function ProductModal({
                                     alt={form.name || "Principal"}
                                     className="mt-3 h-56 w-full rounded-2xl border border-slate-200 object-cover"
                                 />
-                            ) : null}
-                        </Field>
-
-                        <Field
-                            label="Archivo técnico complementario"
-                            hint="Opcional. La ficha técnica pública se genera igual desde el producto."
-                        >
-                            <input
-                                type="file"
-                                onChange={(event) =>
-                                    setForm((current) => ({
-                                        ...current,
-                                        technical_sheet_file:
-                                            event.target.files?.[0] ?? null,
-                                    }))
-                                }
-                                className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-[#25A7CA]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#117a98] hover:file:bg-[#25A7CA]/15"
-                            />
-                            {form.technical_sheet_url ? (
-                                <a
-                                    href={form.technical_sheet_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700"
-                                >
-                                    <Icon icon="solar:file-text-outline" width={18} />
-                                    Ver archivo actual
-                                </a>
                             ) : null}
                         </Field>
                     </div>
@@ -1792,27 +1679,6 @@ function ProductModal({
                                     </label>
                                 ))}
                         </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        <div>
-                            <p className="text-sm font-semibold text-slate-900">
-                                Tablas técnicas
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                                Estas tablas alimentan la ficha pública y el PDF
-                                técnico del producto.
-                            </p>
-                        </div>
-                        <SpecTablesEditor
-                            specTables={form.spec_tables}
-                            onChange={(spec_tables) =>
-                                setForm((current) => ({
-                                    ...current,
-                                    spec_tables,
-                                }))
-                            }
-                        />
                     </div>
 
                     <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
@@ -2706,7 +2572,6 @@ export default function ProductsIndex({
                                             <th className="px-4 py-3 font-semibold text-right">Desc.</th>
                                             <th className="px-4 py-3 font-semibold text-right">Precio con desc.</th>
                                             <th className="px-4 py-3 font-semibold">Galería</th>
-                                            <th className="px-4 py-3 font-semibold">Tablas</th>
                                             <th className="px-4 py-3 font-semibold">Relacionados</th>
                                             <th className="px-4 py-3 font-semibold">Estado</th>
                                             <th className="px-4 py-3 font-semibold text-right">Acciones</th>
@@ -2758,7 +2623,6 @@ export default function ProductsIndex({
                                                     {formatMoney(item.discount_price)}
                                                 </td>
                                                 <td className="px-4 py-4 text-slate-600">{item.gallery_count}</td>
-                                                <td className="px-4 py-4 text-slate-600">{item.spec_tables_count}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.related_count}</td>
                                                 <td className="px-4 py-4">
                                                     <span
