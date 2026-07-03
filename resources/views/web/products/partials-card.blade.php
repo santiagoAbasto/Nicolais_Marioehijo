@@ -5,7 +5,7 @@
         $cardImageUrl = $productImageUrl ?: $brandImageUrl ?: asset('images/placeholder-equipment.svg');
         $usesBrandImage = ! $productImageUrl && $brandImageUrl;
     @endphp
-    <span class="product-card__badge">{{ $product->brand ?: 'Importado' }}</span>
+    <span class="product-card__badge {{ $product->publicBadgeClass() }}">{{ $product->publicBadgeLabel() }}</span>
     <span class="product-card__image">
         <img
             class="product-card__media-img @if($usesBrandImage) product-card__media-img--logo @endif"

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -102,4 +103,50 @@ class Product extends Model
         return $this->hasMany(ProductRelated::class)->orderBy('sort_order');
     }
 
+    public function isNicolaisProduct(): bool
+    {
+        $brand = Str::of((string) $this->brand)
+            ->ascii()
+            ->lower()
+            ->squish()
+            ->toString();
+
+        if (in_array($brand, [
+            'nicolais',
+            'nicolais mario',
+            'nicolais mario e hijo',
+            'nicolais mario ehijo',
+            'nicolais mario e hijos',
+        ], true)) {
+            return true;
+        }
+
+        return $this->usesNicolaisBranding();
+    }
+
+    protected function usesNicolaisBranding(): bool
+    {
+        $paths = [
+            $this->mainMedia?->path,
+            $this->brandLogoMedia?->path,
+        ];
+
+        foreach ($paths as $path) {
+            if ($path === 'brand/logo.svg') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function publicBadgeLabel(): string
+    {
+        return $this->isNicolaisProduct() ? 'Alternativo' : 'Importado';
+    }
+
+    public function publicBadgeClass(): string
+    {
+        return $this->isNicolaisProduct() ? 'product-card__badge--alternative' : '';
+    }
 }

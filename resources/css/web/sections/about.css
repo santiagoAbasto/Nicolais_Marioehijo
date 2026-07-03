@@ -5,6 +5,7 @@
     font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
+body:has(.about-page) .nm-site-footer,
 .about-page + .nm-site-footer {
     margin-top: 0;
 }

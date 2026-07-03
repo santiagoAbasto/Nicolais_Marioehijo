@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductFamily;
 use App\Models\ProductSubfamily;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -43,7 +44,7 @@ class SearchController extends Controller
     {
         $groups = collect([
             $this->sectionGroup($query),
-            $this->productGroup($query, $compact ? 6 : 12),
+            $this->productGroup($query, $compact ? 40 : 80),
             $this->familyGroup($query, $compact ? 4 : 8),
             $this->subfamilyGroup($query, $compact ? 4 : 8),
             $this->newsGroup($query, $compact ? 4 : 8),
@@ -112,27 +113,51 @@ class SearchController extends Controller
     protected function productGroup(string $query, int $limit): ?array
     {
         $terms = $this->terms($query);
+        $normalizedCodeNeedle = $this->codeSearchable($query);
 
         $products = Product::query()
             ->with(['family', 'subfamily'])
             ->where('is_active', true)
-            ->where(function ($builder) use ($terms, $query): void {
+            ->where(function ($builder) use ($terms, $query, $normalizedCodeNeedle): void {
+                $needle = '%'.$query.'%';
+                $codeNeedle = $normalizedCodeNeedle !== '' ? '%'.$normalizedCodeNeedle.'%' : null;
+
                 $builder->where('name', 'like', '%'.$query.'%')
                     ->orWhere('sku', 'like', '%'.$query.'%')
                     ->orWhere('brand', 'like', '%'.$query.'%')
                     ->orWhere('original_code', 'like', '%'.$query.'%')
                     ->orWhere('equivalence_code', 'like', '%'.$query.'%')
                     ->orWhere('oem_code', 'like', '%'.$query.'%')
-                    ->orWhere('short_description', 'like', '%'.$query.'%');
+                    ->orWhere('rubro', 'like', '%'.$query.'%')
+                    ->orWhere('short_description', 'like', '%'.$query.'%')
+                    ->orWhere('applications', 'like', '%'.$query.'%')
+                    ->orWhereHas('relatedProducts', fn (Builder $related): Builder => $this->applyProductCodeSearch($related, $needle, $codeNeedle));
+
+                if ($codeNeedle) {
+                    $this->applyNormalizedProductCodeSearch($builder, $codeNeedle);
+                }
 
                 foreach ($terms as $term) {
+                    $termCodeNeedle = $this->codeSearchable($term);
+
                     $builder->orWhere('name', 'like', '%'.$term.'%')
                         ->orWhere('sku', 'like', '%'.$term.'%')
                         ->orWhere('brand', 'like', '%'.$term.'%')
                         ->orWhere('original_code', 'like', '%'.$term.'%')
                         ->orWhere('equivalence_code', 'like', '%'.$term.'%')
                         ->orWhere('oem_code', 'like', '%'.$term.'%')
-                        ->orWhere('short_description', 'like', '%'.$term.'%');
+                        ->orWhere('rubro', 'like', '%'.$term.'%')
+                        ->orWhere('short_description', 'like', '%'.$term.'%')
+                        ->orWhere('applications', 'like', '%'.$term.'%')
+                        ->orWhereHas('relatedProducts', fn (Builder $related): Builder => $this->applyProductCodeSearch(
+                            $related,
+                            '%'.$term.'%',
+                            $termCodeNeedle !== '' ? '%'.$termCodeNeedle.'%' : null
+                        ));
+
+                    if ($termCodeNeedle !== '') {
+                        $this->applyNormalizedProductCodeSearch($builder, '%'.$termCodeNeedle.'%');
+                    }
                 }
             })
             ->orderBy('sort_order')
@@ -348,6 +373,7 @@ class SearchController extends Controller
             'original_code' => 'Código original',
             'equivalence_code' => 'Equivalencia',
             'oem_code' => 'Código OEM',
+            'rubro' => 'Rubro',
             'brand' => 'Marca',
         ] as $field => $label) {
             if (filled($product->{$field}) && Str::contains($this->searchable((string) $product->{$field}), $normalizedQuery)) {
@@ -363,11 +389,37 @@ class SearchController extends Controller
         return collect([
             $product->family?->name ? 'Familia '.$product->family->name : null,
             $product->brand ? 'Marca '.$product->brand : null,
+            $product->rubro ? 'Rubro '.$product->rubro : null,
             $product->sku ? 'Código NM '.$product->sku : null,
             $product->oem_code ? 'OEM '.$product->oem_code : null,
             $product->equivalence_code ? 'Equiv. '.$product->equivalence_code : null,
             $product->original_code ? 'Original '.$product->original_code : null,
         ])->filter()->unique()->join(' · ');
+    }
+
+    protected function applyProductCodeSearch(Builder $query, string $needle, ?string $normalizedNeedle = null): Builder
+    {
+        $query
+            ->where('sku', 'like', $needle)
+            ->orWhere('original_code', 'like', $needle)
+            ->orWhere('equivalence_code', 'like', $needle)
+            ->orWhere('oem_code', 'like', $needle);
+
+        if ($normalizedNeedle) {
+            $this->applyNormalizedProductCodeSearch($query, $normalizedNeedle);
+        }
+
+        return $query;
+    }
+
+    protected function applyNormalizedProductCodeSearch(Builder $query, string $needle): Builder
+    {
+        foreach (['sku', 'original_code', 'equivalence_code', 'oem_code'] as $column) {
+            $expression = "LOWER(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), '.', ''), '-', ''), ' ', ''), '/', ''))";
+            $query->orWhereRaw($expression.' like ?', [$needle]);
+        }
+
+        return $query;
     }
 
     protected function productScore(Product $product, string $query): int
@@ -382,11 +434,21 @@ class SearchController extends Controller
             'oem_code' => $this->searchable($product->oem_code),
             'equivalence_code' => $this->searchable($product->equivalence_code),
             'original_code' => $this->searchable($product->original_code),
+            'rubro' => $this->searchable($product->rubro),
             'brand' => $this->searchable($product->brand),
             'family' => $this->searchable($product->family?->name),
             'subfamily' => $this->searchable($product->subfamily?->name),
             'short_description' => $this->searchable($product->short_description),
+            'applications' => $this->searchable($product->applications),
         ];
+
+        $codeFields = [
+            'sku' => $this->codeSearchable($product->sku),
+            'oem_code' => $this->codeSearchable($product->oem_code),
+            'equivalence_code' => $this->codeSearchable($product->equivalence_code),
+            'original_code' => $this->codeSearchable($product->original_code),
+        ];
+        $codeNeedle = $this->codeSearchable($query);
 
         if ($fields['name'] === $needle) {
             $score += 1200;
@@ -401,6 +463,18 @@ class SearchController extends Controller
                 $score += 780;
             } elseif ($fields[$field] !== '' && Str::contains($fields[$field], $needle)) {
                 $score += 560;
+            }
+        }
+
+        if ($codeNeedle !== '') {
+            foreach ($codeFields as $field) {
+                if ($field === $codeNeedle) {
+                    $score += 980;
+                } elseif ($field !== '' && Str::startsWith($field, $codeNeedle)) {
+                    $score += 720;
+                } elseif ($field !== '' && Str::contains($field, $codeNeedle)) {
+                    $score += 620;
+                }
             }
         }
 
@@ -419,7 +493,7 @@ class SearchController extends Controller
                 }
             }
 
-            foreach (['brand', 'family', 'subfamily', 'short_description'] as $field) {
+            foreach (['brand', 'rubro', 'family', 'subfamily', 'short_description', 'applications'] as $field) {
                 if ($fields[$field] !== '' && Str::contains($fields[$field], $term)) {
                     $score += 24;
                 }
@@ -455,7 +529,7 @@ class SearchController extends Controller
             ->replaceMatches('/[^\pL\pN]+/u', ' ')
             ->explode(' ')
             ->map(fn (string $term) => trim($term))
-            ->filter(fn (string $term) => Str::length($term) >= 3)
+            ->filter(fn (string $term) => Str::length($term) >= 2 || preg_match('/^\d+$/', $term))
             ->unique()
             ->values();
     }
@@ -472,6 +546,15 @@ class SearchController extends Controller
             ->replace(['ª', 'º'], ['a', 'o'])
             ->replaceMatches('/[^\pL\pN]+/u', ' ')
             ->squish()
+            ->toString();
+    }
+
+    protected function codeSearchable(mixed $value): string
+    {
+        return Str::of((string) $value)
+            ->lower()
+            ->replace(['ª', 'º'], ['a', 'o'])
+            ->replaceMatches('/[^\pL\pN]+/u', '')
             ->toString();
     }
 }

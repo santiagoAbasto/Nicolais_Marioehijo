@@ -293,12 +293,14 @@ class ProductImportController extends AdminPlaceholderController
     {
         $descriptionKey = $this->productImageKey($parsed['description']);
 
-        return Product::query()
+        $matches = Product::query()
             ->where('sku', $parsed['code'])
             ->where('brand', $parsed['brand'])
             ->orderBy('id')
-            ->get()
-            ->first(fn (Product $product): bool => $this->productImageKey($product->name) === $descriptionKey);
+            ->get();
+
+        return $matches->first(fn (Product $product): bool => $this->productImageKey($product->name) === $descriptionKey)
+            ?: $matches->first();
     }
 
     protected function compactRow(array $row): array
@@ -315,8 +317,9 @@ class ProductImportController extends AdminPlaceholderController
         $known = [
             'familia', 'subfamilia', 'codigo', 'descripcion', 'tipo', 'precio_lista',
             'precio_con_descuento', 'precio_venta', 'cantidad', 'subtotal', 'vista_publico',
-            'marca', 'modelo', 'codigo_original', 'equivalencia', 'codigo_oem',
-            'descripcion_corta', 'aplicaciones', 'observaciones', 'rubro',
+            'marca', 'modelo', 'marca_producto', 'codigo_original', 'equivalencia',
+            'codigo_oem', 'descripcion_corta', 'aplicaciones', 'observaciones', 'rubro',
+            'codigo_relacionado',
         ];
 
         $matched = array_intersect($known, $normalized);
@@ -332,16 +335,19 @@ class ProductImportController extends AdminPlaceholderController
         $value = Str::of($value)->ascii()->lower()->replaceMatches('/[^a-z0-9]+/', '_')->trim('_')->toString();
 
         return match ($value) {
-            'cod', 'codigo_nm', 'sku', 'n_nicolais', 'numero_nicolais', 'n_nicolais_' => 'codigo',
-            'nombre', 'producto', 'detalle' => 'descripcion',
+            'cod', 'codigo_nm', 'codigo_n_m', 'cod_nm', 'sku', 'n_nicolais', 'numero_nicolais', 'n_nicolais_' => 'codigo',
+            'nombre', 'producto', 'detalle', 'descripcion_producto' => 'descripcion',
             'modelo' => 'modelo',
             'precio', 'lista' => 'precio_lista',
             'precio_descuento' => 'precio_con_descuento',
             'venta' => 'precio_venta',
             'cant', 'qty' => 'cantidad',
             'publico', 'vista_publica', 'visible_publico' => 'vista_publico',
-            'oem', 'codigo_oem' => 'codigo_oem',
-            'original', 'codigo_original' => 'codigo_original',
+            'oem', 'codigo_oem', 'cod_oem', 'codigo_original_oem' => 'codigo_oem',
+            'original', 'codigo_original', 'cod_original' => 'codigo_original',
+            'codigo_equivalente', 'cod_equivalente', 'codigo_equivalencia', 'equivalencias' => 'equivalencia',
+            'marca_repuesto', 'marca_comercial', 'marca_producto', 'tipo_producto' => 'marca_producto',
+            'codigo_relacion', 'codigo_relacionado', 'relacionado' => 'codigo_relacionado',
             default => $value,
         };
     }
@@ -453,29 +459,74 @@ class ProductImportController extends AdminPlaceholderController
         $price = $this->decimalValue($priceLabel);
         $discountPrice = $this->decimalValue($get('precio_con_descuento'));
         $type = $get('tipo');
-        $brand = $get('marca') ?? $type ?? $defaultBrand;
-        $subfamily = $get('modelo') ?? $get('subfamilia') ?? $currentSection;
+        $vehicleBrand = $get('marca');
+        $vehicleModel = $get('modelo');
+        $brand = $this->normalizeCommercialBrand($get('marca_producto') ?? $type);
+
+        if (! $brand && $vehicleBrand && $this->isCommercialBrand($vehicleBrand)) {
+            $brand = $vehicleBrand;
+            $vehicleBrand = null;
+        }
+
+        $subfamily = $get('subfamilia') ?? $currentSection;
         $isPublic = $get('vista_publico');
+        $applications = $get('aplicaciones');
+        if (! $applications) {
+            $applications = trim(implode(' ', array_filter([$vehicleBrand, $vehicleModel])));
+        }
+        if (! $applications) {
+            $applications = $subfamily ?: $description;
+        }
 
         return [
             'code' => Str::limit($code, 250, ''),
             'family' => $get('familia'),
             'rubro' => $get('rubro') ?? $currentRubro,
             'subfamily' => $subfamily ?: 'General',
-            'brand' => $brand ?: 'Importado',
-            'original_code' => Str::limit((string) ($get('codigo_original') ?? $get('equivalencia') ?? $get('codigo_oem') ?? ''), 250, ''),
-            'equivalence_code' => Str::limit((string) ($get('equivalencia') ?? $get('codigo_original') ?? ''), 250, ''),
-            'oem_code' => Str::limit((string) ($get('codigo_oem') ?? $get('codigo_original') ?? ''), 250, ''),
+            'brand' => $brand ?: $this->normalizeCommercialBrand($defaultBrand) ?: 'Importado',
+            'original_code' => Str::limit((string) ($get('codigo_original') ?? ''), 250, ''),
+            'equivalence_code' => Str::limit((string) ($get('equivalencia') ?? ''), 250, ''),
+            'oem_code' => Str::limit((string) ($get('codigo_oem') ?? ''), 250, ''),
             'description' => Str::limit($description, 250, ''),
             'short_description' => Str::limit((string) ($get('descripcion_corta') ?? $subfamily ?? $description), 250, ''),
             'long_description' => $description,
-            'applications' => $get('aplicaciones') ?? $subfamily ?? $description,
+            'applications' => $applications,
             'price' => $price,
             'discount_price' => $discountPrice,
             'price_label' => $this->buildPriceObservation($type, $priceLabel, $get('precio_con_descuento'), $get('precio_venta'), $get('cantidad'), $get('subtotal')),
-            'related_code' => null,
+            'related_code' => $get('codigo_relacionado'),
             'is_active' => ! in_array(Str::lower((string) $isPublic), ['no', '0', 'false', 'n'], true),
         ];
+    }
+
+    protected function isCommercialBrand(string $brand): bool
+    {
+        return in_array(Str::lower(trim($brand)), [
+            'importado',
+            'mahiro',
+            'tecnotrasmissioni',
+            'nicolais',
+            'nicolais mario e hijo',
+        ], true);
+    }
+
+    protected function normalizeCommercialBrand(?string $brand): ?string
+    {
+        $value = trim((string) $brand);
+
+        if ($value === '') {
+            return null;
+        }
+
+        $normalized = Str::of($value)->ascii()->lower()->squish()->toString();
+
+        return match (true) {
+            Str::contains($normalized, 'nicolais') => 'Nicolais Mario e Hijo',
+            Str::contains($normalized, 'mahiro') => 'Mahiro',
+            Str::contains($normalized, 'tecno') => 'Tecnotrasmissioni',
+            $normalized === 'importado' => 'Importado',
+            default => $value,
+        };
     }
 
     protected function linkRelatedProduct(Product $product, ?string $relatedCode): void
@@ -592,6 +643,7 @@ class ProductImportController extends AdminPlaceholderController
         $upper = Str::upper($name);
 
         return match (true) {
+            Str::contains($upper, 'NICOLAIS') => 'Nicolais Mario e Hijo',
             Str::contains($upper, 'TECNO') => 'Tecnotrasmissioni',
             Str::contains($upper, 'MAHIRO') => 'Mahiro',
             default => 'Importado',
@@ -600,7 +652,7 @@ class ProductImportController extends AdminPlaceholderController
 
     protected function brandLogoId(string $brand): ?int
     {
-        if ($brand === 'Importado') {
+        if ($brand === 'Importado' || Str::contains(Str::lower($brand), 'nicolais')) {
             return MediaAsset::query()->where('path', 'brand/logo.svg')->value('id');
         }
 

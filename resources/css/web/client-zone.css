@@ -363,11 +363,16 @@
     line-height: 18px;
 }
 
+.client-products-table th:nth-child(5),
+.client-products-table th:nth-child(6),
+.client-products-table th:nth-child(7),
+.client-products-table th:nth-child(8),
 .client-products-table th:nth-child(9),
-.client-products-table td:nth-child(9) {
-    text-align: right;
-}
-
+.client-products-table td:nth-child(5),
+.client-products-table td:nth-child(6),
+.client-products-table td:nth-child(7),
+.client-products-table td:nth-child(8),
+.client-products-table td:nth-child(9),
 .client-products-table th:nth-child(10),
 .client-products-table td:nth-child(10) {
     text-align: right;
@@ -376,6 +381,7 @@
 .client-products-table__two-line {
     display: inline-grid;
     gap: 2px;
+    justify-items: end;
     line-height: 1;
     white-space: nowrap;
 }
@@ -441,7 +447,7 @@
     font-style: normal;
     font-weight: 400;
     line-height: normal;
-    text-align: center;
+    text-align: right;
 }
 
 .client-products-table__discount {
@@ -456,7 +462,7 @@
 
 .client-products-table__discount-percent {
     color: #308c05;
-    text-align: center;
+    text-align: right;
     font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
     font-size: 10px;
     font-style: normal;
@@ -476,7 +482,7 @@
 
 .client-products-table__sale-percent {
     color: var(--Negro, #000000);
-    text-align: center;
+    text-align: right;
     font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
     font-size: 10px;
     font-style: normal;
@@ -512,6 +518,7 @@
     box-sizing: border-box;
     display: inline-flex;
     gap: 4.5px;
+    margin-left: auto;
     width: 70px;
     height: 38px;
     border: 1px solid #eeeeee;
@@ -526,7 +533,7 @@
     border: 0;
     color: #111010;
     font: inherit;
-    text-align: center;
+    text-align: right;
     padding: 10px 0 10px 0;
     outline: 0;
 }
@@ -2139,7 +2146,7 @@ body.is-client-product-modal-open {
     box-sizing: border-box;
     display: grid;
     gap: 24px;
-    height: 590px;
+    min-height: 590px;
     padding: 28px 17px 17px 18px;
     width: 808px;
 }
@@ -2300,6 +2307,11 @@ body.is-client-product-modal-open {
     align-items: end;
     display: flex;
     gap: 0;
+    min-width: 0;
+}
+
+.client-payments__file {
+    min-width: 0;
 }
 
 .client-payments__file-control {
@@ -2327,6 +2339,11 @@ body.is-client-product-modal-open {
     color: var(--Negro, #111010);
 }
 
+.client-payments__file-control.has-error {
+    border-color: #d20000;
+    color: #d20000;
+}
+
 .client-payments__file-control [data-client-payment-file-label] {
     display: block;
     max-width: 310px;
@@ -2340,6 +2357,20 @@ body.is-client-product-modal-open {
     inset: 0;
     opacity: 0;
     position: absolute;
+}
+
+.client-payments .client-payments__file-help {
+    color: var(--Text, #5C5C5C);
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.35;
+    margin-top: 6px;
+    max-width: 374px;
+}
+
+.client-payments__file-control.has-error + .client-payments__file-help {
+    color: #d20000;
 }
 
 .client-payments__required {
@@ -2377,7 +2408,8 @@ body.is-client-product-modal-open {
     font-style: normal;
     font-weight: 400;
     line-height: 150%;
-    margin: -7px 0 0 0;
+    margin: -5px 0 0 0;
+    max-width: 100%;
 }
 
 .client-payments__history {

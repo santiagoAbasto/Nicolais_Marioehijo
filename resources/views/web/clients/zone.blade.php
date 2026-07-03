@@ -119,6 +119,7 @@
                         'searchAction' => route('web.client-zone.index'),
                         'clearUrl' => route('web.client-zone.index'),
                         'families' => $families,
+                        'rubros' => $rubros,
                         'brands' => $brands,
                         'models' => $models,
                     ])
@@ -174,7 +175,7 @@
                                         <td>{{ $product->family?->name ?? '-' }}</td>
                                         <td>{{ $product->sku ?? $product->original_code ?? '-' }}</td>
                                         <td>{{ $product->name }}</td>
-                                        <td>{{ $product->brand ?: ($product->subfamily?->name ?? '-') }}</td>
+                                        <td>{{ $product->publicBadgeLabel() }}</td>
                                         <td>{{ $money($listPrice) }}</td>
                                         <td>
                                             <span class="client-products-table__discount">{{ $money($discountedPrice) }}</span>
@@ -295,7 +296,7 @@
                                             <td>{{ $product->family?->name ? Str::ucfirst(Str::lower($product->family->name)) : '-' }}</td>
                                             <td>{{ $product->sku ?? $product->original_code ?? '-' }}</td>
                                             <td>{{ $product->name }}</td>
-                                            <td>{{ $product->brand ?: ($product->subfamily?->name ?? '-') }}</td>
+                                            <td>{{ $product->publicBadgeLabel() }}</td>
                                             <td>{{ $money($item['list_price']) }}</td>
                                             <td>
                                                 <span class="client-products-table__discount">{{ $money($item['discounted_price']) }}</span>
@@ -442,7 +443,7 @@
                                             <td>{{ $product->family?->name ? Str::ucfirst(Str::lower($product->family->name)) : '-' }}</td>
                                             <td>{{ $product->sku ?? $product->original_code ?? '-' }}</td>
                                             <td>{{ $product->name }}</td>
-                                            <td>{{ $product->brand ?: ($product->subfamily?->name ?? '-') }}</td>
+                                            <td>{{ $product->publicBadgeLabel() }}</td>
                                             <td>{{ $money($item['list_price']) }}</td>
                                             <td>
                                                 <span class="client-products-table__discount">{{ $money($item['discounted_price']) }}</span>
@@ -836,12 +837,22 @@
                                     <label class="client-payments__file">
                                         <span>Adjuntar archivo*</span>
                                         <span class="client-payments__file-control">
-                                            <input type="file" name="attachment" required data-client-payment-file-input>
+                                            <input
+                                                type="file"
+                                                name="attachment"
+                                                required
+                                                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.webp"
+                                                data-client-payment-file-input
+                                                data-client-payment-max-kb="{{ $paymentInfo['settings']['attachment_max_kb'] ?? 7168 }}"
+                                            >
                                             <span data-client-payment-file-label>Seleccionar archivo</span>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M8.66675 3.88525V11.3333H7.33342V3.88525L5.17141 6.04725L4.22875 5.10459L8.00008 1.33325L11.7714 5.10459L10.8287 6.04725L8.66675 3.88525ZM2.66675 10.6666H4.00008V13.3333H12.0001V10.6666H13.3334V13.3333C13.3334 14.0666 12.7334 14.6666 12.0001 14.6666H4.00008C3.26675 14.6666 2.66675 14.0246 2.66675 13.3333V10.6666Z" fill="#0072BB"/>
                                             </svg>
                                         </span>
+                                        <small class="client-payments__file-help" data-client-payment-file-help>
+                                            PDF, Excel o imagen hasta {{ $paymentInfo['settings']['attachment_max_mb'] ?? 7 }} MB.
+                                        </small>
                                         @error('attachment')<small>{{ $message }}</small>@enderror
                                     </label>
                                     <span class="client-payments__required">* campos obligatorios</span>
@@ -965,8 +976,11 @@
                     <div class="client-zone__results">
                         <h2>Resultados para "{{ $query }}"</h2>
                         @forelse ($results as $result)
-                            <a href="{{ route('web.products.grade', [$result->series?->line?->slug, $result->series?->slug, $result->slug]) }}">
-                                {{ $result->name }}
+                            <a href="{{ $result['url'] }}">
+                                {{ $result['title'] }}
+                                @if (! empty($result['meta']))
+                                    <small>{{ $result['meta'] }}</small>
+                                @endif
                             </a>
                         @empty
                             <p>No encontramos coincidencias dentro de Zona Cliente.</p>
@@ -1064,11 +1078,35 @@
             document.querySelectorAll("[data-client-payment-file-input]").forEach((input) => {
                 const control = input.closest(".client-payments__file-control");
                 const label = control?.querySelector("[data-client-payment-file-label]");
+                const help = input.closest(".client-payments__file")?.querySelector("[data-client-payment-file-help]");
+                const maxKb = Number(input.dataset.clientPaymentMaxKb || 7168);
+                const maxBytes = maxKb * 1024;
+                const maxMb = Math.floor(maxKb / 1024);
 
                 if (!control || !label) return;
 
                 input.addEventListener("change", () => {
                     const file = input.files?.[0];
+
+                    control.classList.remove("has-error");
+
+                    if (help) {
+                        help.textContent = `PDF, Excel o imagen hasta ${maxMb} MB.`;
+                    }
+
+                    if (file && file.size > maxBytes) {
+                        input.value = "";
+                        label.textContent = `Archivo muy pesado (máx. ${maxMb} MB)`;
+                        control.classList.remove("has-file");
+                        control.classList.add("has-error");
+
+                        if (help) {
+                            help.textContent = "Reducí el peso del archivo o enviá una captura/PDF más liviano.";
+                        }
+
+                        return;
+                    }
+
                     label.textContent = file?.name || "Seleccionar archivo";
                     control.classList.toggle("has-file", Boolean(file));
                 });

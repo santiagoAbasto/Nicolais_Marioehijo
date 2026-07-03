@@ -40,7 +40,7 @@
                     @endphp
 
                     <div class="product-detail__media">
-                        <span class="product-card__badge">{{ $product->brand ?: 'Importado' }}</span>
+                        <span class="product-card__badge {{ $product->publicBadgeClass() }}">{{ $product->publicBadgeLabel() }}</span>
                         <img
                             data-product-main-image
                             data-fallback-src="{{ $fallbackImageUrl }}"
@@ -74,12 +74,20 @@
                     </div>
 
                     <h1>{{ $product->name }}</h1>
-                    <p>{{ $product->description ?: 'Descripci&oacute;n de producto' }}</p>
+                    @if ($product->description)
+                        <p>{{ $product->description }}</p>
+                    @else
+                        <p>Descripci&oacute;n de producto</p>
+                    @endif
 
                     <div class="product-detail__variants">
                         @foreach ($equivalences as $equivalence)
                             <div class="product-detail__variant @if($equivalence->is($product)) is-current @endif">
-                                <strong>{{ $equivalence->sku ?: 'Sin c&oacute;digo' }}</strong>
+                                @if ($equivalence->sku)
+                                    <strong>{{ $equivalence->sku }}</strong>
+                                @else
+                                    <strong>Sin c&oacute;digo</strong>
+                                @endif
                                 <span>{{ $product->name }}</span>
                                 @if ($equivalence->brandLogoMedia)
                                     <img src="{{ media_asset_url($equivalence->brandLogoMedia) }}" alt="{{ $equivalence->brand ?: 'Marca' }}">

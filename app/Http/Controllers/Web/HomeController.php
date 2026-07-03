@@ -7,8 +7,8 @@ use App\Models\HomeHeroSlide;
 use App\Models\Post;
 use App\Models\Product;
 use App\Models\ProductFamily;
-use App\Models\ProductSubfamily;
 use App\Models\SiteSection;
+use App\Support\ProductVehicleOptions;
 use Illuminate\Contracts\View\View;
 
 class HomeController extends Controller
@@ -33,16 +33,8 @@ class HomeController extends Controller
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get();
-            $brands = Product::query()
-                ->whereNotNull('brand')
-                ->distinct()
-                ->orderBy('brand')
-                ->pluck('brand');
-            $models = ProductSubfamily::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->limit(80)
-                ->pluck('name');
+            $brands = ProductVehicleOptions::brands();
+            $models = ProductVehicleOptions::models();
             $rubros = Product::query()
                 ->whereNotNull('rubro')
                 ->where('rubro', '!=', '')

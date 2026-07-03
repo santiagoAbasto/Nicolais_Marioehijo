@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductFamily;
-use App\Models\ProductSubfamily;
+use App\Support\ProductVehicleOptions;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductCatalogController extends Controller
@@ -108,32 +109,68 @@ class ProductCatalogController extends Controller
         }
 
         if ($request->filled('q')) {
-            $needle = '%'.$request->string('q')->trim().'%';
-            $query->where(function ($inner) use ($needle): void {
+            $rawNeedle = $request->string('q')->trim()->toString();
+            $needle = '%'.$rawNeedle.'%';
+            $codeNeedle = $this->codeSearchable($rawNeedle);
+            $query->where(function ($inner) use ($needle, $codeNeedle): void {
                 $inner->where('name', 'like', $needle)
                     ->orWhere('sku', 'like', $needle)
                     ->orWhere('original_code', 'like', $needle)
                     ->orWhere('equivalence_code', 'like', $needle)
                     ->orWhere('oem_code', 'like', $needle)
-                    ->orWhere('rubro', 'like', $needle);
+                    ->orWhere('rubro', 'like', $needle)
+                    ->orWhere('applications', 'like', $needle)
+                    ->orWhere('short_description', 'like', $needle)
+                    ->orWhereHas('relatedProducts', fn (Builder $related): Builder => $this->applyCodeSearch(
+                        $related,
+                        $needle,
+                        $codeNeedle !== '' ? '%'.$codeNeedle.'%' : null
+                    ));
+
+                if ($codeNeedle !== '') {
+                    $this->applyNormalizedCodeSearch($inner, '%'.$codeNeedle.'%');
+                }
             });
         }
 
         if ($request->filled('codigo')) {
-            $query->where('sku', 'like', '%'.$request->string('codigo')->trim().'%');
+            $rawNeedle = $request->string('codigo')->trim()->toString();
+            $needle = '%'.$rawNeedle.'%';
+            $codeNeedle = $this->codeSearchable($rawNeedle);
+            $query->where(function ($inner) use ($needle, $codeNeedle): void {
+                $inner->where('sku', 'like', $needle);
+
+                if ($codeNeedle !== '') {
+                    $this->applyNormalizedCodeSearch($inner, '%'.$codeNeedle.'%', ['sku']);
+                }
+            });
         }
 
         if ($request->filled('equivalencia')) {
-            $needle = '%'.$request->string('equivalencia')->trim().'%';
-            $query->where(function ($inner) use ($needle): void {
-                $inner->where('original_code', 'like', $needle)
-                    ->orWhere('equivalence_code', 'like', $needle)
-                    ->orWhere('oem_code', 'like', $needle);
+            $rawNeedle = $request->string('equivalencia')->trim()->toString();
+            $needle = '%'.$rawNeedle.'%';
+            $codeNeedle = $this->codeSearchable($rawNeedle);
+            $query->where(function ($inner) use ($needle, $codeNeedle): void {
+                $this->applyCodeSearch($inner, $needle, $codeNeedle !== '' ? '%'.$codeNeedle.'%' : null)
+                    ->orWhereHas('relatedProducts', fn (Builder $related): Builder => $this->applyCodeSearch(
+                        $related,
+                        $needle,
+                        $codeNeedle !== '' ? '%'.$codeNeedle.'%' : null
+                    ));
             });
         }
 
         if ($request->filled('oem')) {
-            $query->where('oem_code', 'like', '%'.$request->string('oem')->trim().'%');
+            $rawNeedle = $request->string('oem')->trim()->toString();
+            $needle = '%'.$rawNeedle.'%';
+            $codeNeedle = $this->codeSearchable($rawNeedle);
+            $query->where(function ($inner) use ($needle, $codeNeedle): void {
+                $inner->where('oem_code', 'like', $needle);
+
+                if ($codeNeedle !== '') {
+                    $this->applyNormalizedCodeSearch($inner, '%'.$codeNeedle.'%', ['oem_code']);
+                }
+            });
         }
 
         if ($request->filled('rubro')) {
@@ -141,12 +178,14 @@ class ProductCatalogController extends Controller
         }
 
         if ($request->filled('model')) {
-            $query->whereHas('subfamily', function ($inner) use ($request): void {
-                $inner->where('name', $request->query('model'));
-            });
+            $query->where('applications', 'like', '%'.$request->string('model')->trim().'%');
         }
 
-        foreach (['family' => 'product_family_id', 'brand' => 'brand'] as $param => $column) {
+        if ($request->filled('brand')) {
+            $query->where('applications', 'like', '%'.$request->string('brand')->trim().'%');
+        }
+
+        foreach (['family' => 'product_family_id'] as $param => $column) {
             if ($request->filled($param)) {
                 $query->where($column, $request->query($param));
             }
@@ -171,20 +210,50 @@ class ProductCatalogController extends Controller
             'products' => $products,
             'featured' => $featured,
             'selectedFamily' => $selectedFamily,
-            'brands' => Product::query()->whereNotNull('brand')->distinct()->orderBy('brand')->pluck('brand'),
+            'brands' => ProductVehicleOptions::brands(),
             'rubros' => Product::query()
                 ->whereNotNull('rubro')
                 ->where('rubro', '!=', '')
                 ->distinct()
                 ->orderBy('rubro')
                 ->pluck('rubro'),
-            'models' => ProductSubfamily::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->limit(120)
-                ->pluck('name'),
+            'models' => ProductVehicleOptions::models($request->query('brand')),
             'showAll' => $showAll,
         ]);
+    }
+
+    protected function applyCodeSearch(Builder $query, string $needle, ?string $normalizedNeedle = null): Builder
+    {
+        $query
+            ->where('sku', 'like', $needle)
+            ->orWhere('original_code', 'like', $needle)
+            ->orWhere('equivalence_code', 'like', $needle)
+            ->orWhere('oem_code', 'like', $needle);
+
+        if ($normalizedNeedle) {
+            $this->applyNormalizedCodeSearch($query, $normalizedNeedle);
+        }
+
+        return $query;
+    }
+
+    protected function applyNormalizedCodeSearch(Builder $query, string $needle, array $columns = ['sku', 'original_code', 'equivalence_code', 'oem_code']): Builder
+    {
+        foreach ($columns as $column) {
+            $expression = "LOWER(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), '.', ''), '-', ''), ' ', ''), '/', ''))";
+            $query->orWhereRaw($expression.' like ?', [$needle]);
+        }
+
+        return $query;
+    }
+
+    protected function codeSearchable(mixed $value): string
+    {
+        return \Illuminate\Support\Str::of((string) $value)
+            ->lower()
+            ->replace(['ª', 'º'], ['a', 'o'])
+            ->replaceMatches('/[^\pL\pN]+/u', '')
+            ->toString();
     }
 
     protected function showProduct(Product $product): View

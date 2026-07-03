@@ -1247,7 +1247,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!groups.length) {
                 if (data.insight && data.insight.headline) {
-                    status.textContent = `Sin coincidencias exactas para "${trimmed}".`;
+                    status.textContent = `Sin coincidencias para "${trimmed}".`;
                     renderGroups([], data.insight);
                     return;
                 }

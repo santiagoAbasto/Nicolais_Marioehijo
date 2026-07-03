@@ -137,7 +137,7 @@ Route::post('/clientes/login', [ClientController::class, 'login'])
     ->middleware(app()->isLocal() ? 'throttle:120,1' : 'throttle:10,1')
     ->name('web.clients.login');
 Route::post('/clientes/solicitud', [ClientController::class, 'store'])
-    ->middleware(['throttle:5,1', 'public.form.protection'])
+    ->middleware([app()->isLocal() ? 'throttle:120,1' : 'throttle:20,1', 'public.form.protection'])
     ->name('web.clients.store');
 Route::get('/zona-clientes/lista-de-precios/{priceListFile}/office-file', [ClientZoneController::class, 'officePriceListFile'])
     ->middleware('signed')
@@ -171,7 +171,7 @@ Route::post('/presupuesto', [QuoteController::class, 'store'])
     ->name('web.quote.store');
 Route::get('/contacto', [ContactController::class, 'show'])->name('web.contact.show');
 Route::post('/contacto', [ContactController::class, 'store'])
-    ->middleware([app()->isLocal() ? 'throttle:120,1' : 'throttle:5,1', 'public.form.protection'])
+    ->middleware([app()->isLocal() ? 'throttle:120,1' : 'throttle:20,1', 'public.form.protection'])
     ->name('web.contact.store');
 Route::post('/newsletter', [NewsletterController::class, 'store'])
     ->middleware([app()->isLocal() ? 'throttle:120,1' : 'throttle:10,1', 'public.form.protection'])
@@ -200,6 +200,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/presupuesto/consultas', [QuoteAdminController::class, 'requests'])->name('quote.requests');
         Route::get('/productos', [ProductCatalogAdminController::class, 'index'])->name('products.index');
         Route::get('/productos/template', [ProductCatalogAdminController::class, 'template'])->name('products.import-template');
+        Route::get('/productos/exportar', [ProductCatalogAdminController::class, 'export'])->name('products.export');
         
         Route::get('/productos/taxonomia', [\App\Http\Controllers\Admin\CatalogTaxonomyController::class, 'index'])->name('products.taxonomy');
         Route::post('/productos/taxonomia/familias', [\App\Http\Controllers\Admin\CatalogTaxonomyController::class, 'storeFamily'])->name('products.taxonomy.families.store');

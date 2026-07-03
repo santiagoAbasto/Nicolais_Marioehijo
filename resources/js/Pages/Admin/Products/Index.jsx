@@ -1,4 +1,5 @@
 import PublicPreviewModal from "@/Components/Admin/PublicPreviewModal";
+import TablePagination from "@/Components/Admin/TablePagination";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { emitAdminToast } from "@/lib/adminToast";
 import { Head, router } from "@inertiajs/react";
@@ -7,6 +8,7 @@ import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 
 const IMAGE_IMPORT_BATCH_SIZE = 40;
+const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
 function mediaUrlFromAsset(asset) {
     if (!asset?.path) {
@@ -1845,6 +1847,7 @@ export default function ProductsIndex({
     initialTab,
     publicProductsUrl,
     importTemplateUrl,
+    exportProductsUrl,
 }) {
     const [tab, setTab] = useState(
         initialTab && initialTab !== "cover" ? initialTab : "products",
@@ -1869,6 +1872,7 @@ export default function ProductsIndex({
     const [importingImages, setImportingImages] = useState(false);
     const [imageImportReport, setImageImportReport] = useState(null);
     const [imageImportProgress, setImageImportProgress] = useState(null);
+    const [productsPage, setProductsPage] = useState(1);
 
     useEffect(() => {
         const allowedTabs = ["families", "subfamilies", "products", "import"];
@@ -1916,6 +1920,18 @@ export default function ProductsIndex({
             return searchableText.includes(query);
         });
     }, [products, productSearch]);
+
+    useEffect(() => {
+        setProductsPage(1);
+    }, [productSearch, products.length]);
+
+    const productsPageCount = Math.max(1, Math.ceil(filteredProducts.length / ADMIN_PRODUCTS_PAGE_SIZE));
+    const currentProductsPage = Math.min(productsPage, productsPageCount);
+    const paginatedProducts = useMemo(() => {
+        const start = (currentProductsPage - 1) * ADMIN_PRODUCTS_PAGE_SIZE;
+
+        return filteredProducts.slice(start, start + ADMIN_PRODUCTS_PAGE_SIZE);
+    }, [currentProductsPage, filteredProducts]);
 
     const reloadPage = () => {
         router.reload({
@@ -2263,6 +2279,14 @@ export default function ProductsIndex({
                                 >
                                     <Icon icon="solar:download-outline" width={18} />
                                     Descargar template
+                                </a>
+
+                                <a
+                                    href={exportProductsUrl}
+                                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#0072BB] hover:text-[#0072BB]"
+                                >
+                                    <Icon icon="solar:download-minimalistic-outline" width={18} />
+                                    Bajar base completa
                                 </a>
                             </div>
                         </div>
@@ -2664,7 +2688,8 @@ export default function ProductsIndex({
                         </div>
 
                         {filteredProducts.length ? (
-                            <div className="overflow-x-auto">
+                            <>
+                            <div className="admin-horizontal-scroll">
                                 <table className="min-w-[1700px] text-left text-sm">
                                     <thead>
                                         <tr className="border-b border-slate-200 text-slate-500">
@@ -2688,7 +2713,7 @@ export default function ProductsIndex({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredProducts.map((item) => (
+                                        {paginatedProducts.map((item) => (
                                             <tr key={item.id} className="border-b border-slate-100 align-top">
                                                 <td className="px-4 py-4">
                                                     <div className="flex items-center gap-3">
@@ -2716,7 +2741,7 @@ export default function ProductsIndex({
                                                 <td className="px-4 py-4 text-slate-600">{item.family_name}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.subfamily_name || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.sku || "-"}</td>
-                                                <td className="px-4 py-4 text-slate-600">{item.brand || "-"}</td>
+                                                <td className="px-4 py-4 text-slate-600">{item.brand_display || item.brand || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.rubro || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.original_code || "-"}</td>
                                                 <td className="px-4 py-4 text-slate-600">{item.equivalence_code || "-"}</td>
@@ -2772,6 +2797,14 @@ export default function ProductsIndex({
                                     </tbody>
                                 </table>
                             </div>
+                            <TablePagination
+                                page={currentProductsPage}
+                                total={filteredProducts.length}
+                                perPage={ADMIN_PRODUCTS_PAGE_SIZE}
+                                onPageChange={setProductsPage}
+                                itemLabel="productos"
+                            />
+                            </>
                         ) : (
                             <EmptyState
                                 title={
@@ -2937,6 +2970,14 @@ export default function ProductsIndex({
                                         Bajar template
                                     </a>
 
+                                    <a
+                                        href={exportProductsUrl}
+                                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#0072BB] hover:text-[#0072BB]"
+                                    >
+                                        <Icon icon="solar:download-minimalistic-outline" width={18} />
+                                        Bajar base completa
+                                    </a>
+
                                     <button
                                         type="button"
                                         onClick={runImageImport}
@@ -2959,25 +3000,24 @@ export default function ProductsIndex({
                                 </p>
                                 <div className="mt-4 space-y-4 text-sm leading-6 text-slate-600">
                                     <p>
-                                        `families`: nombre, slug, descripción,
-                                        color, orden, visibilidad y media IDs.
+                                        Columnas mínimas: familia, rubro,
+                                        descripción, marca, modelo, código NM,
+                                        código equivalente y código OEM.
                                     </p>
                                     <p>
-                                        `subfamilies`: familia padre por slug,
-                                        nombre, slug, descripciones, portada y
-                                        visibilidad.
+                                        Marca y modelo corresponden al vehículo.
+                                        Para la marca comercial del producto usá
+                                        `marca_producto`.
                                     </p>
                                     <p>
-                                        `products`: familia, subfamilia, ficha
-                                        completa, galerías, relacionados y
-                                        `spec_tables_json`.
+                                        Si el archivo trae precio, queda guardado
+                                        para zona privada. La web pública no lo
+                                        muestra.
                                     </p>
                                     <p>
-                                        `gallery_media_ids` va separado por comas.
-                                    </p>
-                                    <p>
-                                        `related_product_slugs` va separado por
-                                        comas.
+                                        Podés bajar la base completa para revisar
+                                        todo y usar el template para sumar nuevos
+                                        productos.
                                     </p>
                                     <p>
                                         `spec_tables_json` acepta un array JSON con

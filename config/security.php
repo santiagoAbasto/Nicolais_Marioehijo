@@ -15,7 +15,7 @@ return [
     'trusted_proxies' => $trustedProxies,
     'forms' => [
         'honeypot_field' => env('FORM_HONEYPOT_FIELD', 'nm_form_check'),
-        'max_attempts' => (int) env('FORM_RATE_LIMIT_MAX_ATTEMPTS', env('APP_ENV') === 'local' ? 120 : 5),
+        'max_attempts' => (int) env('FORM_RATE_LIMIT_MAX_ATTEMPTS', env('APP_ENV') === 'local' ? 120 : 20),
         'decay_seconds' => (int) env('FORM_RATE_LIMIT_DECAY_SECONDS', 60),
         'minimum_seconds' => [
             'web.contact.store' => 0,

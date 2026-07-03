@@ -89,30 +89,35 @@ class ContactController extends Controller
             ->all();
 
         if ($recipient) {
-            try {
-                $pendingMail = Mail::to($recipient);
-
-                if ($ccRecipients !== []) {
-                    $pendingMail->cc($ccRecipients);
-                }
-
-                $pendingMail->send(new ContactRequestNotification(
-                    $contactRequest,
-                    route('admin.contact.index', ['tab' => 'requests'])
-                ));
-            } catch (\Throwable $exception) {
-                Log::warning('Contact request notification could not be sent.', [
-                    'contact_request_id' => $contactRequest->id,
-                    'recipient' => $recipient,
-                    'cc' => $ccRecipients,
-                    'error' => $exception->getMessage(),
-                ]);
-            }
+            app()->terminating(fn () => $this->sendContactNotification($contactRequest, $recipient, $ccRecipients));
         }
 
         return redirect()
             ->route('web.contact.show', $product ? ['producto' => $product->slug] : [])
             ->with('status', 'Recibimos tu consulta. Te vamos a responder a la brevedad.');
+    }
+
+    protected function sendContactNotification(ContactRequest $contactRequest, string $recipient, array $ccRecipients): void
+    {
+        try {
+            $pendingMail = Mail::to($recipient);
+
+            if ($ccRecipients !== []) {
+                $pendingMail->cc($ccRecipients);
+            }
+
+            $pendingMail->send(new ContactRequestNotification(
+                $contactRequest,
+                route('admin.contact.index', ['tab' => 'requests'])
+            ));
+        } catch (\Throwable $exception) {
+            Log::warning('Contact request notification could not be sent.', [
+                'contact_request_id' => $contactRequest->id,
+                'recipient' => $recipient,
+                'cc' => $ccRecipients,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     protected function resolveProduct(mixed $identifier): ?Product

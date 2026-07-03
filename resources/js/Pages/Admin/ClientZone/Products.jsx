@@ -1,9 +1,12 @@
 import AdminLayout from "@/Layouts/AdminLayout";
+import TablePagination from "@/Components/Admin/TablePagination";
 import { emitAdminToast } from "@/lib/adminToast";
 import { Head } from "@inertiajs/react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+const CLIENT_PRODUCTS_PAGE_SIZE = 20;
 
 function normalize(value) {
     return String(value || "")
@@ -83,6 +86,7 @@ export default function ClientZoneProducts({
     const [savingIds, setSavingIds] = useState([]);
     const [globalDiscount, setGlobalDiscount] = useState("");
     const [savingGlobal, setSavingGlobal] = useState(false);
+    const [productsPage, setProductsPage] = useState(1);
 
     const currentStats = useMemo(() => ({
         total: rows.length,
@@ -115,6 +119,18 @@ export default function ClientZoneProducts({
             ].filter(Boolean).join(" ")).includes(search),
         );
     }, [rows, query]);
+
+    useEffect(() => {
+        setProductsPage(1);
+    }, [query, rows.length]);
+
+    const productsPageCount = Math.max(1, Math.ceil(filteredProducts.length / CLIENT_PRODUCTS_PAGE_SIZE));
+    const currentProductsPage = Math.min(productsPage, productsPageCount);
+    const paginatedProducts = useMemo(() => {
+        const start = (currentProductsPage - 1) * CLIENT_PRODUCTS_PAGE_SIZE;
+
+        return filteredProducts.slice(start, start + CLIENT_PRODUCTS_PAGE_SIZE);
+    }, [currentProductsPage, filteredProducts]);
 
     const updateLocalDiscount = (productId, value) => {
         setRows((current) =>
@@ -344,7 +360,7 @@ export default function ClientZoneProducts({
                     </label>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="admin-horizontal-scroll">
                     <table className="min-w-[1420px] divide-y divide-slate-100 text-left text-sm">
                         <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-400">
                             <tr>
@@ -364,7 +380,7 @@ export default function ClientZoneProducts({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredProducts.map((product) => (
+                            {paginatedProducts.map((product) => (
                                 <tr key={product.id} className="align-top">
                                     <td className="px-4 py-4">
                                         <p className="font-semibold text-slate-900">{product.name}</p>
@@ -372,7 +388,7 @@ export default function ClientZoneProducts({
                                     <td className="px-4 py-4 text-slate-600">{product.family_name || "-"}</td>
                                     <td className="px-4 py-4 text-slate-600">{product.subfamily_name || "-"}</td>
                                     <td className="px-4 py-4 text-slate-600">{product.sku || "-"}</td>
-                                    <td className="px-4 py-4 text-slate-600">{product.brand || "-"}</td>
+                                    <td className="px-4 py-4 text-slate-600">{product.brand_display || product.brand || "-"}</td>
                                     <td className="px-4 py-4 text-slate-600">{product.original_code || "-"}</td>
                                     <td className="px-4 py-4 text-slate-600">{product.equivalence_code || "-"}</td>
                                     <td className="px-4 py-4 text-slate-600">{product.oem_code || "-"}</td>
@@ -420,6 +436,14 @@ export default function ClientZoneProducts({
                         </tbody>
                     </table>
                 </div>
+
+                <TablePagination
+                    page={currentProductsPage}
+                    total={filteredProducts.length}
+                    perPage={CLIENT_PRODUCTS_PAGE_SIZE}
+                    onPageChange={setProductsPage}
+                    itemLabel="productos"
+                />
 
                 {!filteredProducts.length ? (
                     <div className="px-5 py-12 text-center text-sm text-slate-500">

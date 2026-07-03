@@ -44,7 +44,7 @@
 .contact-product__head,
 .contact-product__row {
     display: grid;
-    grid-template-columns: 136px 133px 121px minmax(310px, 1fr) 230px;
+    grid-template-columns: 136px minmax(120px, 133px) minmax(160px, 190px) minmax(360px, 1fr) minmax(160px, 230px);
     align-items: center;
 }
 
@@ -67,12 +67,25 @@
 }
 
 .contact-product__head span:last-child,
-.contact-product__row span:last-child {
+.contact-product__type {
     padding-left: 36px;
 }
 
-.contact-product__row span:nth-of-type(3) {
+.contact-product__description {
     padding-right: 36px;
+}
+
+.contact-product__family,
+.contact-product__code,
+.contact-product__description,
+.contact-product__type {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.contact-product__code {
+    line-height: 1.35;
 }
 
 .contact-product__row {
@@ -125,6 +138,21 @@
     width: 24px;
     height: 24px;
     color: #0072bb;
+}
+
+.contact-info-card__icon--whatsapp {
+    flex-basis: 20px;
+    width: 20px;
+    height: 20px;
+    aspect-ratio: 1 / 1;
+    color: #0072bb;
+}
+
+.contact-info-card__icon--whatsapp svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    aspect-ratio: 1 / 1;
 }
 
 .contact-info-card p {
@@ -293,15 +321,15 @@
     body:has(.contact-page) .contact-product__head,
     body:has(.contact-page) .contact-product__row {
         width: 100%;
-        grid-template-columns: 112px 116px 112px minmax(220px, 1fr) 160px;
+        grid-template-columns: 96px minmax(100px, 116px) minmax(130px, 160px) minmax(220px, 1fr) minmax(120px, 160px);
     }
 
     body:has(.contact-page) .contact-product__head span:last-child,
-    body:has(.contact-page) .contact-product__row span:last-child {
+    body:has(.contact-page) .contact-product__type {
         padding-left: 20px;
     }
 
-    body:has(.contact-page) .contact-product__row span:nth-of-type(3) {
+    body:has(.contact-page) .contact-product__description {
         padding-right: 20px;
     }
 
@@ -536,13 +564,13 @@
     .contact-page .contact-product__head,
     .contact-page .contact-product__row {
         width: 100%;
-        grid-template-columns: 112px 116px 112px minmax(220px, 1fr) 160px;
+        grid-template-columns: 96px minmax(100px, 116px) minmax(130px, 160px) minmax(220px, 1fr) minmax(120px, 160px);
     }
     .contact-page .contact-product__head span:last-child,
-    .contact-page .contact-product__row span:last-child {
+    .contact-page .contact-product__type {
         padding-left: 20px;
     }
-    .contact-page .contact-product__row span:nth-of-type(3) {
+    .contact-page .contact-product__description {
         padding-right: 20px;
     }
     .contact-page .contact-info-grid {

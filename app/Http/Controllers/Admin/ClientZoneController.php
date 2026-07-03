@@ -254,7 +254,7 @@ class ClientZoneController extends Controller
     public function products(): Response
     {
         $products = Product::query()
-            ->with(['family', 'subfamily'])
+            ->with(['family', 'subfamily', 'mainMedia', 'brandLogoMedia'])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get()
@@ -618,7 +618,7 @@ class ClientZoneController extends Controller
             });
 
         $products = Product::query()
-            ->with(['family', 'subfamily'])
+            ->with(['family', 'subfamily', 'mainMedia', 'brandLogoMedia'])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get()
@@ -696,6 +696,7 @@ class ClientZoneController extends Controller
             'name' => $product->name,
             'sku' => $product->sku,
             'brand' => $product->brand,
+            'brand_display' => $product->publicBadgeLabel(),
             'family_name' => $product->family?->name,
             'subfamily_name' => $product->subfamily?->name,
             'original_code' => $product->original_code,

@@ -35,7 +35,7 @@ class MediaAssetController extends AdminPlaceholderController
         }
 
         $validated = $request->validate([
-            'file' => ['required', 'file', 'max:102400', 'mimetypes:image/jpeg,image/png,image/webp,image/svg+xml,application/pdf,video/mp4,video/quicktime,video/webm'],
+            'file' => ['required', 'file', 'max:204800', 'mimetypes:image/jpeg,image/png,image/webp,image/svg+xml,application/pdf,video/mp4,video/quicktime,video/webm'],
             'title' => ['nullable', 'string', 'max:255'],
             'alt_text' => ['nullable', 'string', 'max:255'],
         ]);

@@ -18,6 +18,30 @@ const DEFAULT_ITEMS = [
     },
 ];
 
+const CATALOG_COVER_MAX_BYTES = 10 * 1024 * 1024;
+const CATALOG_PDF_MAX_BYTES = 200 * 1024 * 1024;
+const UPLOAD_TIMEOUT_MS = 180000;
+
+function humanFileSize(bytes) {
+    if (!bytes) {
+        return "0 MB";
+    }
+
+    return `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
+}
+
+function errorMessage(error) {
+    if (error.code === "ECONNABORTED") {
+        return "La subida tardó demasiado. Probá con un archivo más liviano o revisá la conexión.";
+    }
+
+    if (error.response?.status === 413) {
+        return "El archivo es demasiado pesado para el servidor. Subí un PDF de hasta 200 MB.";
+    }
+
+    return error.response?.data?.message ?? "No se pudieron guardar los catálogos.";
+}
+
 function normalizeItem(item, fallback, index) {
     return {
         id: item?.id ?? null,
@@ -44,7 +68,7 @@ function buildItems(section) {
     });
 }
 
-async function uploadAsset(file, title) {
+async function uploadAsset(file, title, onProgress) {
     const payload = new FormData();
     payload.append("file", file);
     payload.append("title", title || file.name);
@@ -52,6 +76,14 @@ async function uploadAsset(file, title) {
     const response = await axios.post("/admin/api/media-assets", payload, {
         headers: {
             "Content-Type": "multipart/form-data",
+        },
+        timeout: UPLOAD_TIMEOUT_MS,
+        onUploadProgress: (event) => {
+            if (!event.total || !onProgress) {
+                return;
+            }
+
+            onProgress(Math.round((event.loaded * 100) / event.total));
         },
     });
 
@@ -180,6 +212,7 @@ function CatalogFileCard({ item, index, onChange }) {
 export default function CatalogIndex({ catalogSection, publicCatalogUrl }) {
     const [items, setItems] = useState(() => buildItems(catalogSection));
     const [saving, setSaving] = useState(false);
+    const [savingLabel, setSavingLabel] = useState("Guardando...");
 
     useEffect(() => {
         setItems(buildItems(catalogSection));
@@ -194,7 +227,26 @@ export default function CatalogIndex({ catalogSection, publicCatalogUrl }) {
     }
 
     async function handleSave() {
+        for (const item of items) {
+            if (item.image_file && item.image_file.size > CATALOG_COVER_MAX_BYTES) {
+                emitAdminToast(
+                    `La tapa de "${item.title}" pesa ${humanFileSize(item.image_file.size)}. Máximo permitido: 10 MB.`,
+                    "error",
+                );
+                return;
+            }
+
+            if (item.file_file && item.file_file.size > CATALOG_PDF_MAX_BYTES) {
+                emitAdminToast(
+                    `El PDF de "${item.title}" pesa ${humanFileSize(item.file_file.size)}. Máximo permitido: 200 MB.`,
+                    "error",
+                );
+                return;
+            }
+        }
+
         setSaving(true);
+        setSavingLabel("Guardando...");
 
         try {
             const nextItems = [];
@@ -204,12 +256,22 @@ export default function CatalogIndex({ catalogSection, publicCatalogUrl }) {
                 let fileMediaId = item.file_media_id;
 
                 if (item.image_file) {
-                    const imageAsset = await uploadAsset(item.image_file, `${item.title} - tapa`);
+                    setSavingLabel(`Subiendo tapa de ${item.title}...`);
+                    const imageAsset = await uploadAsset(
+                        item.image_file,
+                        `${item.title} - tapa`,
+                        (progress) => setSavingLabel(`Subiendo tapa... ${progress}%`),
+                    );
                     mediaId = imageAsset.id;
                 }
 
                 if (item.file_file) {
-                    const fileAsset = await uploadAsset(item.file_file, item.title);
+                    setSavingLabel(`Subiendo PDF de ${item.title}...`);
+                    const fileAsset = await uploadAsset(
+                        item.file_file,
+                        item.title,
+                        (progress) => setSavingLabel(`Subiendo PDF... ${progress}%`),
+                    );
                     fileMediaId = fileAsset.id;
                 }
 
@@ -225,6 +287,7 @@ export default function CatalogIndex({ catalogSection, publicCatalogUrl }) {
                 });
             }
 
+            setSavingLabel("Publicando cambios...");
             await axios.put(`/admin/api/site-sections/${catalogSection.id}`, {
                 page_key: "catalogo",
                 section_key: "catalog_files",
@@ -237,12 +300,10 @@ export default function CatalogIndex({ catalogSection, publicCatalogUrl }) {
             emitAdminToast("Catálogos actualizados correctamente.");
             router.reload({ only: ["catalogSection"] });
         } catch (error) {
-            emitAdminToast(
-                error.response?.data?.message ?? "No se pudieron guardar los catálogos.",
-                "error",
-            );
+            emitAdminToast(errorMessage(error), "error");
         } finally {
             setSaving(false);
+            setSavingLabel("Guardando...");
         }
     }
 
@@ -282,7 +343,7 @@ export default function CatalogIndex({ catalogSection, publicCatalogUrl }) {
                                 className="inline-flex items-center gap-2 rounded-2xl bg-[#0072BB] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(0,114,187,0.24)] transition hover:bg-[#005d98] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <Icon icon={saving ? "solar:refresh-outline" : "solar:diskette-outline"} width={18} />
-                                {saving ? "Guardando..." : "Guardar cambios"}
+                                {saving ? savingLabel : "Guardar cambios"}
                             </button>
                         </div>
                     </div>

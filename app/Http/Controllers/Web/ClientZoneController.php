@@ -4,17 +4,17 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClientAccessRequest;
-use App\Models\Catalog\CatalogGrade;
 use App\Models\ClientOrder;
 use App\Models\ClientPaymentReceipt;
 use App\Models\ClientPaymentSetting;
 use App\Models\ClientPriceListFile;
 use App\Models\Product;
 use App\Models\ProductFamily;
-use App\Models\ProductSubfamily;
 use App\Support\CmsSecurity;
+use App\Support\ProductVehicleOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\URL;
 
 class ClientZoneController extends Controller
 {
+    private const PAYMENT_RECEIPT_MAX_KB = 7168;
+
     public function index(Request $request, string $section = 'productos'): View|RedirectResponse
     {
         $clientRequest = $this->approvedClientRequest($request);
@@ -36,17 +38,13 @@ class ClientZoneController extends Controller
         $query = trim((string) $request->query('q', ''));
         $results = collect();
 
-        if ($query !== '') {
-            $results = CatalogGrade::query()
-                ->with(['series.line'])
-                ->where('is_active', true)
-                ->where(function ($builder) use ($query) {
-                    $builder->where('name', 'like', "%{$query}%")
-                        ->orWhere('slug', 'like', "%{$query}%")
-                        ->orWhere('short_title', 'like', "%{$query}%");
-                })
-                ->limit(12)
-                ->get();
+        if ($query !== '' && $section !== 'productos') {
+            $results = $this->productSuggestionResults($query, 12)
+                ->map(fn (Product $product) => [
+                    'title' => $product->name,
+                    'url' => route('web.client-zone.index', ['q' => $product->sku ?: $query]),
+                    'meta' => $this->clientProductMeta($product),
+                ]);
         }
 
         return view('web.clients.zone', [
@@ -82,7 +80,7 @@ class ClientZoneController extends Controller
             'branch' => ['required', 'string', 'max:120'],
             'invoices' => ['nullable', 'string', 'max:180'],
             'observations' => ['nullable', 'string', 'max:2000'],
-            'attachment' => $this->clientAttachmentRules(required: true, maxKilobytes: 20480),
+            'attachment' => $this->clientAttachmentRules(required: true, maxKilobytes: self::PAYMENT_RECEIPT_MAX_KB),
         ]);
 
         $file = $request->file('attachment');
@@ -282,7 +280,7 @@ class ClientZoneController extends Controller
                     'family' => $product->family?->name,
                     'code' => $product->sku ?? $product->original_code,
                     'description' => $product->name,
-                    'type' => $product->brand ?: ($product->subfamily?->name ?? null),
+                    'type' => $product->publicBadgeLabel(),
                     'quantity' => $item['quantity'],
                     'list_price' => $item['list_price'],
                     'discounted_price' => $item['discounted_price'],
@@ -374,7 +372,7 @@ class ClientZoneController extends Controller
                     'family' => $product->family?->name,
                     'code' => $product->sku ?? $product->original_code,
                     'description' => $product->name,
-                    'type' => $product->brand ?: ($product->subfamily?->name ?? null),
+                    'type' => $product->publicBadgeLabel(),
                     'quantity' => $item['quantity'],
                     'list_price' => $item['list_price'],
                     'discounted_price' => $item['discounted_price'],
@@ -525,35 +523,37 @@ class ClientZoneController extends Controller
             ->filter()
             ->values();
 
-        $products = CatalogGrade::query()
-            ->with(['series.line'])
-            ->where('is_active', true)
-            ->where(function ($builder) use ($query) {
-                $builder->where('name', 'like', "%{$query}%")
-                    ->orWhere('slug', 'like', "%{$query}%")
-                    ->orWhere('short_title', 'like', "%{$query}%");
-            })
-            ->limit(8)
-            ->get()
-            ->map(fn (CatalogGrade $grade) => [
-                'title' => $grade->name,
-                'url' => route('web.products.grade', [$grade->series?->line?->slug, $grade->series?->slug, $grade->slug]),
-                'context' => 'Productos Zona Clientes',
-                'meta' => collect([$grade->series?->line?->name, $grade->series?->name])->filter()->join(' · '),
-                'match_reason' => 'Coincide con productos privados',
+        $products = $this->productSuggestionResults($query, 40)
+            ->map(fn (Product $product) => [
+                'title' => $product->name,
+                'url' => route('web.client-zone.index', ['q' => $product->sku ?: $query]),
+                'context' => 'Producto Zona Clientes',
+                'meta' => $this->clientProductMeta($product),
+                'match_reason' => $this->clientProductReason($product, $query),
             ]);
 
         $groups = collect([
-            $sections->isNotEmpty() ? ['title' => 'Secciones Zona Clientes', 'items' => $sections->all()] : null,
             $products->isNotEmpty() ? ['title' => 'Productos Zona Clientes', 'items' => $products->all()] : null,
+            $sections->isNotEmpty() ? ['title' => 'Secciones Zona Clientes', 'items' => $sections->all()] : null,
         ])->filter()->values()->all();
 
         return response()->json([
             'query' => $query,
             'groups' => $groups,
             'insight' => [
-                'headline' => 'Estoy buscando solo dentro de Zona Clientes.',
-                'description' => 'Este buscador no consulta la web pública: usa únicamente contenido privado del cliente.',
+                'headline' => $products->isNotEmpty()
+                    ? 'Encontré productos dentro de Zona Clientes.'
+                    : 'Estoy buscando productos dentro de Zona Clientes.',
+                'description' => 'Prioricé código, equivalencia, OEM, rubro, descripción y aplicaciones del catálogo privado.',
+                'supporting_groups' => [
+                    [
+                        'title' => 'Atajos de producto',
+                        'items' => $products->take(4)->map(fn (array $item) => [
+                            'title' => $item['title'],
+                            'url' => $item['url'],
+                        ])->values()->all(),
+                    ],
+                ],
             ],
         ]);
     }
@@ -608,23 +608,21 @@ class ClientZoneController extends Controller
             ->orderBy('name')
             ->get();
 
-        $brands = Product::query()
-            ->where('is_active', true)
-            ->whereNotNull('brand')
+        $rubros = Product::query()
+            ->whereNotNull('rubro')
+            ->where('rubro', '!=', '')
             ->distinct()
-            ->orderBy('brand')
-            ->pluck('brand');
+            ->orderBy('rubro')
+            ->pluck('rubro');
 
-        $models = ProductSubfamily::query()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->limit(120)
-            ->pluck('name');
+        $brands = ProductVehicleOptions::brands();
+        $models = ProductVehicleOptions::models($request->query('brand'));
 
         if ($section !== 'productos') {
             return [
                 'products' => collect(),
                 'families' => $families,
+                'rubros' => $rubros,
                 'brands' => $brands,
                 'models' => $models,
                 'clientMargin' => $this->clientMargin($clientRequest),
@@ -637,40 +635,83 @@ class ClientZoneController extends Controller
             ->where('is_active', true);
 
         if ($request->filled('q')) {
-            $needle = '%'.$request->string('q')->trim().'%';
-            $products->where(function ($inner) use ($needle): void {
+            $rawNeedle = $request->string('q')->trim()->toString();
+            $needle = '%'.$rawNeedle.'%';
+            $codeNeedle = $this->codeSearchable($rawNeedle);
+            $products->where(function ($inner) use ($needle, $codeNeedle): void {
                 $inner->where('name', 'like', $needle)
                     ->orWhere('sku', 'like', $needle)
                     ->orWhere('original_code', 'like', $needle)
                     ->orWhere('equivalence_code', 'like', $needle)
-                    ->orWhere('oem_code', 'like', $needle);
+                    ->orWhere('oem_code', 'like', $needle)
+                    ->orWhere('rubro', 'like', $needle)
+                    ->orWhere('applications', 'like', $needle)
+                    ->orWhere('short_description', 'like', $needle)
+                    ->orWhereHas('relatedProducts', fn (Builder $related): Builder => $this->applyProductCodeSearch(
+                        $related,
+                        $needle,
+                        $codeNeedle !== '' ? '%'.$codeNeedle.'%' : null
+                    ));
+
+                if ($codeNeedle !== '') {
+                    $this->applyNormalizedProductCodeSearch($inner, '%'.$codeNeedle.'%');
+                }
             });
         }
 
         if ($request->filled('codigo')) {
-            $products->where('sku', 'like', '%'.$request->string('codigo')->trim().'%');
+            $rawNeedle = $request->string('codigo')->trim()->toString();
+            $needle = '%'.$rawNeedle.'%';
+            $codeNeedle = $this->codeSearchable($rawNeedle);
+            $products->where(function ($inner) use ($needle, $codeNeedle): void {
+                $inner->where('sku', 'like', $needle);
+
+                if ($codeNeedle !== '') {
+                    $this->applyNormalizedProductCodeSearch($inner, '%'.$codeNeedle.'%', ['sku']);
+                }
+            });
         }
 
         if ($request->filled('equivalencia')) {
-            $needle = '%'.$request->string('equivalencia')->trim().'%';
-            $products->where(function ($inner) use ($needle): void {
-                $inner->where('original_code', 'like', $needle)
-                    ->orWhere('equivalence_code', 'like', $needle)
-                    ->orWhere('oem_code', 'like', $needle);
+            $rawNeedle = $request->string('equivalencia')->trim()->toString();
+            $needle = '%'.$rawNeedle.'%';
+            $codeNeedle = $this->codeSearchable($rawNeedle);
+            $products->where(function ($inner) use ($needle, $codeNeedle): void {
+                $this->applyProductCodeSearch($inner, $needle, $codeNeedle !== '' ? '%'.$codeNeedle.'%' : null)
+                    ->orWhereHas('relatedProducts', fn (Builder $related): Builder => $this->applyProductCodeSearch(
+                        $related,
+                        $needle,
+                        $codeNeedle !== '' ? '%'.$codeNeedle.'%' : null
+                    ));
             });
         }
 
         if ($request->filled('oem')) {
-            $products->where('oem_code', 'like', '%'.$request->string('oem')->trim().'%');
-        }
+            $rawNeedle = $request->string('oem')->trim()->toString();
+            $needle = '%'.$rawNeedle.'%';
+            $codeNeedle = $this->codeSearchable($rawNeedle);
+            $products->where(function ($inner) use ($needle, $codeNeedle): void {
+                $inner->where('oem_code', 'like', $needle);
 
-        if ($request->filled('model')) {
-            $products->whereHas('subfamily', function ($inner) use ($request): void {
-                $inner->where('name', $request->query('model'));
+                if ($codeNeedle !== '') {
+                    $this->applyNormalizedProductCodeSearch($inner, '%'.$codeNeedle.'%', ['oem_code']);
+                }
             });
         }
 
-        foreach (['family' => 'product_family_id', 'brand' => 'brand'] as $param => $column) {
+        if ($request->filled('rubro')) {
+            $products->where('rubro', $request->query('rubro'));
+        }
+
+        if ($request->filled('model')) {
+            $products->where('applications', 'like', '%'.$request->string('model')->trim().'%');
+        }
+
+        if ($request->filled('brand')) {
+            $products->where('applications', 'like', '%'.$request->string('brand')->trim().'%');
+        }
+
+        foreach (['family' => 'product_family_id'] as $param => $column) {
             if ($request->filled($param)) {
                 $products->where($column, $request->query($param));
             }
@@ -678,11 +719,13 @@ class ClientZoneController extends Controller
 
         return [
             'products' => $products
+                ->orderByRaw('CASE WHEN COALESCE(discount_price, price, 0) > 0 THEN 0 ELSE 1 END')
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->paginate(12)
                 ->withQueryString(),
             'families' => $families,
+            'rubros' => $rubros,
             'brands' => $brands,
             'models' => $models,
             'clientMargin' => $this->clientMargin($clientRequest),
@@ -887,6 +930,8 @@ class ClientZoneController extends Controller
                 'terms_title' => $settings->terms_title,
                 'terms_details' => $settings->terms_details,
                 'receipt_note' => $settings->receipt_note,
+                'attachment_max_kb' => self::PAYMENT_RECEIPT_MAX_KB,
+                'attachment_max_mb' => (int) floor(self::PAYMENT_RECEIPT_MAX_KB / 1024),
             ],
             'receipts' => ClientPaymentReceipt::query()
                 ->where('client_access_request_id', $clientRequest->id)
@@ -980,6 +1025,210 @@ class ClientZoneController extends Controller
     private function authorizeClientOrder(ClientOrder $order, ClientAccessRequest $clientRequest): void
     {
         abort_unless((int) $order->client_access_request_id === (int) $clientRequest->id, 403);
+    }
+
+    private function productSuggestionResults(string $query, int $limit)
+    {
+        $normalizedCodeNeedle = $this->codeSearchable($query);
+        $terms = $this->searchTerms($query);
+
+        return Product::query()
+            ->with(['family', 'subfamily'])
+            ->where('is_active', true)
+            ->where(function ($builder) use ($query, $normalizedCodeNeedle, $terms): void {
+                $needle = '%'.$query.'%';
+                $codeNeedle = $normalizedCodeNeedle !== '' ? '%'.$normalizedCodeNeedle.'%' : null;
+
+                $builder->where('name', 'like', $needle)
+                    ->orWhere('sku', 'like', $needle)
+                    ->orWhere('original_code', 'like', $needle)
+                    ->orWhere('equivalence_code', 'like', $needle)
+                    ->orWhere('oem_code', 'like', $needle)
+                    ->orWhere('rubro', 'like', $needle)
+                    ->orWhere('brand', 'like', $needle)
+                    ->orWhere('short_description', 'like', $needle)
+                    ->orWhere('applications', 'like', $needle)
+                    ->orWhereHas('relatedProducts', fn (Builder $related): Builder => $this->applyProductCodeSearch($related, $needle, $codeNeedle));
+
+                if ($codeNeedle) {
+                    $this->applyNormalizedProductCodeSearch($builder, $codeNeedle);
+                }
+
+                foreach ($terms as $term) {
+                    $termCodeNeedle = $this->codeSearchable($term);
+
+                    $builder->orWhere('name', 'like', '%'.$term.'%')
+                        ->orWhere('sku', 'like', '%'.$term.'%')
+                        ->orWhere('original_code', 'like', '%'.$term.'%')
+                        ->orWhere('equivalence_code', 'like', '%'.$term.'%')
+                        ->orWhere('oem_code', 'like', '%'.$term.'%')
+                        ->orWhere('rubro', 'like', '%'.$term.'%')
+                        ->orWhere('brand', 'like', '%'.$term.'%')
+                        ->orWhere('short_description', 'like', '%'.$term.'%')
+                        ->orWhere('applications', 'like', '%'.$term.'%')
+                        ->orWhereHas('relatedProducts', fn (Builder $related): Builder => $this->applyProductCodeSearch(
+                            $related,
+                            '%'.$term.'%',
+                            $termCodeNeedle !== '' ? '%'.$termCodeNeedle.'%' : null
+                        ));
+
+                    if ($termCodeNeedle !== '') {
+                        $this->applyNormalizedProductCodeSearch($builder, '%'.$termCodeNeedle.'%');
+                    }
+                }
+            })
+            ->orderByRaw('CASE WHEN COALESCE(discount_price, price, 0) > 0 THEN 0 ELSE 1 END')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->limit(max($limit * 8, 48))
+            ->get()
+            ->sortByDesc(fn (Product $product): int => $this->clientProductScore($product, $query))
+            ->take($limit)
+            ->values();
+    }
+
+    private function clientProductMeta(Product $product): string
+    {
+        return collect([
+            $product->family?->name ? 'Familia '.$product->family->name : null,
+            $product->rubro ? 'Rubro '.$product->rubro : null,
+            $product->sku ? 'Código NM '.$product->sku : null,
+            $product->equivalence_code ? 'Equiv. '.$product->equivalence_code : null,
+            $product->oem_code ? 'OEM '.$product->oem_code : null,
+            $product->original_code ? 'Original '.$product->original_code : null,
+        ])->filter()->unique()->join(' · ');
+    }
+
+    private function clientProductReason(Product $product, string $query): string
+    {
+        $needle = $this->searchable($query);
+        $codeNeedle = $this->codeSearchable($query);
+
+        foreach ([
+            'sku' => 'Código NM',
+            'original_code' => 'Código original',
+            'equivalence_code' => 'Equivalencia',
+            'oem_code' => 'Código OEM',
+        ] as $field => $label) {
+            $fieldCode = $this->codeSearchable($product->{$field});
+
+            if ($codeNeedle !== '' && $fieldCode !== '' && str_contains($fieldCode, $codeNeedle)) {
+                return $label.' '.$product->{$field};
+            }
+        }
+
+        foreach ([
+            'name' => 'Descripción',
+            'rubro' => 'Rubro',
+            'applications' => 'Aplicación',
+        ] as $field => $label) {
+            if (filled($product->{$field}) && str_contains($this->searchable($product->{$field}), $needle)) {
+                return $label.' '.$product->{$field};
+            }
+        }
+
+        return 'Coincidencia del catálogo privado';
+    }
+
+    private function clientProductScore(Product $product, string $query): int
+    {
+        $needle = $this->searchable($query);
+        $codeNeedle = $this->codeSearchable($query);
+        $score = 0;
+
+        $name = $this->searchable($product->name);
+
+        if ($name === $needle) {
+            $score += 900;
+        } elseif ($needle !== '' && str_starts_with($name, $needle)) {
+            $score += 680;
+        } elseif ($needle !== '' && str_contains($name, $needle)) {
+            $score += 520;
+        }
+
+        if ($codeNeedle !== '') {
+            foreach (['sku', 'original_code', 'equivalence_code', 'oem_code'] as $field) {
+                $fieldCode = $this->codeSearchable($product->{$field});
+
+                if ($fieldCode === $codeNeedle) {
+                    $score += 1200;
+                } elseif ($fieldCode !== '' && str_starts_with($fieldCode, $codeNeedle)) {
+                    $score += 940;
+                } elseif ($fieldCode !== '' && str_contains($fieldCode, $codeNeedle)) {
+                    $score += 780;
+                }
+            }
+        }
+
+        foreach ($this->searchTerms($query) as $term) {
+            foreach (['name', 'rubro', 'brand', 'short_description', 'applications'] as $field) {
+                if (str_contains($this->searchable($product->{$field}), $term)) {
+                    $score += 40;
+                }
+            }
+        }
+
+        if ((float) ($product->discount_price ?? $product->price ?? 0) > 0) {
+            $score += 20;
+        }
+
+        return $score;
+    }
+
+    private function applyProductCodeSearch(Builder $query, string $needle, ?string $normalizedNeedle = null): Builder
+    {
+        $query
+            ->where('sku', 'like', $needle)
+            ->orWhere('original_code', 'like', $needle)
+            ->orWhere('equivalence_code', 'like', $needle)
+            ->orWhere('oem_code', 'like', $needle);
+
+        if ($normalizedNeedle) {
+            $this->applyNormalizedProductCodeSearch($query, $normalizedNeedle);
+        }
+
+        return $query;
+    }
+
+    private function applyNormalizedProductCodeSearch(Builder $query, string $needle, array $columns = ['sku', 'original_code', 'equivalence_code', 'oem_code']): Builder
+    {
+        foreach ($columns as $column) {
+            $expression = "LOWER(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), '.', ''), '-', ''), ' ', ''), '/', ''))";
+            $query->orWhereRaw($expression.' like ?', [$needle]);
+        }
+
+        return $query;
+    }
+
+    private function searchTerms(string $query)
+    {
+        return Str::of($query)
+            ->lower()
+            ->replaceMatches('/[^\pL\pN]+/u', ' ')
+            ->explode(' ')
+            ->map(fn (string $term) => trim($term))
+            ->filter(fn (string $term) => Str::length($term) >= 2 || preg_match('/^\d+$/', $term))
+            ->unique()
+            ->values();
+    }
+
+    private function searchable(mixed $value): string
+    {
+        return Str::of((string) $value)
+            ->lower()
+            ->replace(['ª', 'º'], ['a', 'o'])
+            ->replaceMatches('/[^\pL\pN]+/u', ' ')
+            ->squish()
+            ->toString();
+    }
+
+    private function codeSearchable(mixed $value): string
+    {
+        return Str::of((string) $value)
+            ->lower()
+            ->replace(['ª', 'º'], ['a', 'o'])
+            ->replaceMatches('/[^\pL\pN]+/u', '')
+            ->toString();
     }
 
     private function logoDataUri(): string

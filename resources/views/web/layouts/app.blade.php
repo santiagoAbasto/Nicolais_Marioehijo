@@ -185,7 +185,6 @@
                         <label>Teléfono<input type="tel" name="phone" required></label>
                         <label>Empresa<input type="text" name="company"></label>
                         <label>CUIT / DNI (opcional)<input type="text" name="tax_id"></label>
-                        <label class="client-register-form__wide">Mensaje<textarea name="message" rows="3"></textarea></label>
                     </div>
 
                     <p class="client-access-modal__message" data-client-register-message aria-live="polite"></p>
@@ -298,12 +297,6 @@
         $footerContactItems = collect($footerContactItems ?? [])->filter(fn ($item) => filled($item->value ?? null));
         $footerSocialLinks = collect($footerSocialLinks ?? [])->filter(fn ($link) => filled($link->url ?? null));
 
-        if ($footerSocialLinks->isEmpty()) {
-            $footerSocialLinks = collect([
-                (object) ['platform' => 'instagram', 'label' => 'Instagram', 'url' => 'https://instagram.com/nicolaismarioehijo'],
-                (object) ['platform' => 'facebook', 'label' => 'Facebook', 'url' => 'https://www.facebook.com/'],
-            ]);
-        }
     @endphp
 
     <footer class="nm-site-footer" aria-label="Footer">
