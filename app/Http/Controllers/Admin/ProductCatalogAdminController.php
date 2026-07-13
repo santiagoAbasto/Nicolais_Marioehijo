@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -49,7 +50,7 @@ class ProductCatalogAdminController extends AdminPlaceholderController
                 ->map(fn (ProductSubfamily $subfamily) => $this->subfamilyPayload($subfamily)),
             'products' => Product::query()
                 ->with(['family', 'subfamily', 'mainMedia'])
-                ->withCount(['media as gallery_count', 'specTables as spec_tables_count', 'relatedProducts as related_count'])
+                ->withCount(['media as gallery_count', 'relatedProducts as related_count'])
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get()
@@ -122,9 +123,26 @@ class ProductCatalogAdminController extends AdminPlaceholderController
             $sheet->fromArray($row, null, 'A'.($index + 2));
         }
 
-        $sheet->getStyle('A1:Q1')->getFont()->setBold(true);
+        $lastColumn = $sheet->getHighestColumn();
+        $sheet->getStyle('A1:'.$lastColumn.'1')->getFont()->setBold(true);
+        $sheet->freezePane('A2');
+        $sheet->setAutoFilter('A1:'.$lastColumn.'1');
 
-        foreach (range('A', 'Q') as $column) {
+        $typeValidation = (new DataValidation())
+            ->setType(DataValidation::TYPE_LIST)
+            ->setErrorStyle(DataValidation::STYLE_STOP)
+            ->setAllowBlank(true)
+            ->setShowDropDown(true)
+            ->setShowErrorMessage(true)
+            ->setErrorTitle('Tipo no válido')
+            ->setError('Elegí Alternativo o Importado.')
+            ->setPromptTitle('Tipo de producto')
+            ->setPrompt('Alternativo: producto Nicolais. Importado: producto de otra marca.')
+            ->setShowInputMessage(true)
+            ->setFormula1('"Alternativo,Importado"');
+        $sheet->setDataValidation('D2:D1048576', $typeValidation);
+
+        foreach (range('A', $lastColumn) as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 
@@ -142,6 +160,7 @@ class ProductCatalogAdminController extends AdminPlaceholderController
             'familia',
             'rubro',
             'descripcion',
+            'tipo',
             'marca',
             'modelo',
             'codigo_nm',
@@ -167,6 +186,7 @@ class ProductCatalogAdminController extends AdminPlaceholderController
             $product->family?->name,
             $product->rubro,
             $product->name,
+            $product->publicBadgeLabel(),
             $vehicle['brand'],
             $vehicle['model'],
             $product->sku,
@@ -219,7 +239,6 @@ class ProductCatalogAdminController extends AdminPlaceholderController
                 ? max(0, (1 - ($discountPrice / $listPrice)) * 100)
                 : null,
             'gallery_count' => $product->gallery_count ?? 0,
-            'spec_tables_count' => $product->spec_tables_count ?? 0,
             'related_count' => $product->related_count ?? 0,
         ];
     }

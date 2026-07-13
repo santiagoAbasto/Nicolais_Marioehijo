@@ -327,6 +327,10 @@
     width: 106px;
 }
 
+.client-products-table--catalog {
+    min-width: 1096px;
+}
+
 .client-products-table thead {
     background: #000000;
     color: #ffffff;
@@ -510,6 +514,16 @@
 .client-products-table.is-sale-hidden .client-products-table__col-sale,
 .client-products-table.is-sale-hidden th:nth-child(7),
 .client-products-table.is-sale-hidden td:nth-child(7) {
+    display: none;
+}
+
+.client-products-table--catalog.is-sale-hidden th:nth-child(7),
+.client-products-table--catalog.is-sale-hidden td:nth-child(7) {
+    display: table-cell;
+}
+
+.client-products-table--catalog.is-sale-hidden th:nth-child(6),
+.client-products-table--catalog.is-sale-hidden td:nth-child(6) {
     display: none;
 }
 

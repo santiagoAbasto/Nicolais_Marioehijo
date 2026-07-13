@@ -617,6 +617,13 @@ class ClientZoneController extends Controller
 
         $brands = ProductVehicleOptions::brands();
         $models = ProductVehicleOptions::models($request->query('brand'));
+        $productBrands = Product::query()
+            ->whereNotNull('brand')
+            ->where('brand', '!=', '')
+            ->whereRaw("LOWER(TRIM(brand)) NOT IN ('importado', 'alternativo')")
+            ->distinct()
+            ->orderBy('brand')
+            ->pluck('brand');
 
         if ($section !== 'productos') {
             return [
@@ -625,6 +632,7 @@ class ClientZoneController extends Controller
                 'rubros' => $rubros,
                 'brands' => $brands,
                 'models' => $models,
+                'productBrands' => $productBrands,
                 'clientMargin' => $this->clientMargin($clientRequest),
                 'clientDiscount' => 5,
             ];
@@ -711,6 +719,10 @@ class ClientZoneController extends Controller
             $products->where('applications', 'like', '%'.$request->string('brand')->trim().'%');
         }
 
+        if ($request->filled('product_brand')) {
+            $products->where('brand', $request->string('product_brand')->trim()->toString());
+        }
+
         foreach (['family' => 'product_family_id'] as $param => $column) {
             if ($request->filled($param)) {
                 $products->where($column, $request->query($param));
@@ -728,6 +740,7 @@ class ClientZoneController extends Controller
             'rubros' => $rubros,
             'brands' => $brands,
             'models' => $models,
+            'productBrands' => $productBrands,
             'clientMargin' => $this->clientMargin($clientRequest),
             'clientDiscount' => 5,
         ];

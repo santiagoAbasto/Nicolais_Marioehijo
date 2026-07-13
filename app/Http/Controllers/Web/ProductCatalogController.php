@@ -185,6 +185,10 @@ class ProductCatalogController extends Controller
             $query->where('applications', 'like', '%'.$request->string('brand')->trim().'%');
         }
 
+        if ($request->filled('product_brand')) {
+            $query->where('brand', $request->string('product_brand')->trim()->toString());
+        }
+
         foreach (['family' => 'product_family_id'] as $param => $column) {
             if ($request->filled($param)) {
                 $query->where($column, $request->query($param));
@@ -211,6 +215,13 @@ class ProductCatalogController extends Controller
             'featured' => $featured,
             'selectedFamily' => $selectedFamily,
             'brands' => ProductVehicleOptions::brands(),
+            'productBrands' => Product::query()
+                ->whereNotNull('brand')
+                ->where('brand', '!=', '')
+                ->whereRaw("LOWER(TRIM(brand)) NOT IN ('importado', 'alternativo')")
+                ->distinct()
+                ->orderBy('brand')
+                ->pluck('brand'),
             'rubros' => Product::query()
                 ->whereNotNull('rubro')
                 ->where('rubro', '!=', '')

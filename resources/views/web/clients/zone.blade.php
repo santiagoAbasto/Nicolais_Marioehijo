@@ -122,6 +122,7 @@
                         'rubros' => $rubros,
                         'brands' => $brands,
                         'models' => $models,
+                        'productBrands' => $productBrands,
                     ])
 
                     <div class="client-products-toolbar">
@@ -133,14 +134,13 @@
                     </div>
 
                     <div class="client-products-table-wrap">
-                        <table class="client-products-table">
+                        <table class="client-products-table client-products-table--catalog">
                             <colgroup>
                                 <col class="client-products-table__col-family">
                                 <col class="client-products-table__col-code">
                                 <col class="client-products-table__col-description">
                                 <col class="client-products-table__col-type">
                                 <col class="client-products-table__col-list">
-                                <col class="client-products-table__col-discount">
                                 <col class="client-products-table__col-sale">
                                 <col class="client-products-table__col-qty">
                                 <col class="client-products-table__col-subtotal">
@@ -153,7 +153,6 @@
                                     <th>Descripción</th>
                                     <th>Tipo</th>
                                     <th>Precio lista</th>
-                                    <th><span class="client-products-table__two-line"><span>Precio con</span><span>Descuento</span></span></th>
                                     <th>Precio venta</th>
                                     <th>Cant</th>
                                     <th>Subtotal</th>
@@ -164,9 +163,7 @@
                                 @forelse ($products as $product)
                                     @php
                                         $listPrice = (float) ($product->price ?? 0);
-                                        $discountedPrice = (float) ($product->discount_price ?? $listPrice);
-                                        $discountPercent = $listPrice > 0 ? max(0, (1 - ($discountedPrice / $listPrice)) * 100) : 0;
-                                        $salePrice = $discountedPrice * (1 + ($clientMargin / 100));
+                                        $salePrice = $listPrice * (1 + ($clientMargin / 100));
                                         $quantity = 1;
                                         $subtotal = $salePrice * $quantity;
                                         $money = fn (float $value): string => '$'.number_format($value, 2, ',', '.');
@@ -177,10 +174,6 @@
                                         <td>{{ $product->name }}</td>
                                         <td>{{ $product->publicBadgeLabel() }}</td>
                                         <td>{{ $money($listPrice) }}</td>
-                                        <td>
-                                            <span class="client-products-table__discount">{{ $money($discountedPrice) }}</span>
-                                            <small class="client-products-table__discount-percent">({{ number_format($discountPercent, 0, ',', '.') }}%)</small>
-                                        </td>
                                         <td>
                                             <span class="client-products-table__sale">{{ $money($salePrice) }}</span>
                                             <small class="client-products-table__sale-percent">({{ number_format($clientMargin, 0, ',', '.') }}%)</small>
@@ -236,7 +229,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10">No encontramos productos para esos filtros.</td>
+                                        <td colspan="9">No encontramos productos para esos filtros.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

@@ -7,7 +7,9 @@ import { Icon } from "@iconify/react";
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 
-const IMAGE_IMPORT_BATCH_SIZE = 40;
+const EXCEL_IMPORT_BATCH_SIZE = 10;
+const EXCEL_IMPORT_MAX_BATCH_BYTES = 180 * 1024 * 1024;
+const IMAGE_IMPORT_BATCH_SIZE = 15;
 const ADMIN_PRODUCTS_PAGE_SIZE = 20;
 
 function mediaUrlFromAsset(asset) {
@@ -1732,7 +1734,7 @@ export default function ProductsIndex({
     const [editingSubfamily, setEditingSubfamily] = useState(null);
     const [productModalOpen, setProductModalOpen] = useState(false);
     const [editingProductId, setEditingProductId] = useState(null);
-    const [importFile, setImportFile] = useState(null);
+    const [importFiles, setImportFiles] = useState([]);
     const [importing, setImporting] = useState(false);
     const [imageImportFiles, setImageImportFiles] = useState([]);
     const [importingImages, setImportingImages] = useState(false);
@@ -1813,7 +1815,7 @@ export default function ProductsIndex({
                 setEditingSubfamily(null);
                 setProductModalOpen(false);
                 setEditingProductId(null);
-                setImportFile(null);
+                setImportFiles([]);
             },
         });
     };
@@ -1911,27 +1913,78 @@ export default function ProductsIndex({
     };
 
     const runImport = async () => {
-        if (!importFile) {
-            emitAdminToast("Seleccioná un archivo para importar.", "error");
+        if (!importFiles.length) {
+            emitAdminToast("Seleccioná uno o más archivos para importar.", "error");
             return;
         }
 
         setImporting(true);
 
         try {
-            const payload = new FormData();
-            payload.append("file", importFile);
+            const batches = [];
+            let currentBatch = [];
+            let currentBatchBytes = 0;
 
-            const response = await axios.post("/admin/api/product-import", payload, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            for (const file of importFiles) {
+                const exceedsCount = currentBatch.length >= EXCEL_IMPORT_BATCH_SIZE;
+                const exceedsSize = currentBatch.length > 0
+                    && currentBatchBytes + file.size > EXCEL_IMPORT_MAX_BATCH_BYTES;
 
-            const summary = response.data.summary ?? {};
+                if (exceedsCount || exceedsSize) {
+                    batches.push(currentBatch);
+                    currentBatch = [];
+                    currentBatchBytes = 0;
+                }
+
+                currentBatch.push(file);
+                currentBatchBytes += file.size;
+            }
+
+            if (currentBatch.length) {
+                batches.push(currentBatch);
+            }
+
+            const summary = {
+                families: 0,
+                subfamilies: 0,
+                products: 0,
+                updated: 0,
+                duplicate_rows: 0,
+                skipped: 0,
+                files_count: 0,
+                files: [],
+                errors: [],
+            };
+
+            for (const [batchIndex, batch] of batches.entries()) {
+                const payload = new FormData();
+                batch.forEach((file) => payload.append("files[]", file));
+
+                try {
+                    const response = await axios.post("/admin/api/product-import", payload, {
+                        headers: { "Content-Type": "multipart/form-data" },
+                    });
+                    const batchSummary = response.data.summary ?? {};
+
+                    ["families", "subfamilies", "products", "updated", "duplicate_rows", "skipped", "files_count"].forEach((key) => {
+                        summary[key] += Number(batchSummary[key] ?? 0);
+                    });
+                    summary.files.push(...(Array.isArray(batchSummary.files) ? batchSummary.files : []));
+                    summary.errors.push(...(Array.isArray(batchSummary.errors) ? batchSummary.errors : []));
+                } catch (error) {
+                    summary.errors.push({
+                        file: `Tanda ${batchIndex + 1}`,
+                        reason: error?.response?.data?.message || `No se pudieron procesar ${batch.length} archivo(s).`,
+                    });
+                }
+            }
+
+            const errorCount = summary.errors.length;
             emitAdminToast(
-                `Importación completa. Familias: ${summary.families ?? 0}, subfamilias: ${summary.subfamilies ?? 0}, productos: ${summary.products ?? 0}.`,
+                `Importación completa. Archivos: ${summary.files_count ?? importFiles.length}, productos nuevos: ${summary.products ?? 0}, actualizados: ${summary.updated ?? 0}, filas duplicadas unificadas: ${summary.duplicate_rows ?? 0}, errores: ${errorCount}.`,
+                errorCount ? "warning" : "success",
             );
+            setImportFiles([]);
             reloadPage();
         } catch (error) {
             emitAdminToast(
@@ -2701,22 +2754,33 @@ export default function ProductsIndex({
                                 </div>
 
                                 <Field
-                                    label="Archivo Excel o CSV"
-                                    hint="Para importar todo completo usá el template XLSX con hojas families, subfamilies y products."
+                                    label="Archivos Excel o CSV"
+                                    hint="Podés seleccionar una o varias listas. El título superior se toma como rubro y la sección debajo como subrubro."
                                 >
                                     <input
                                         type="file"
                                         accept=".xlsx,.xls,.csv"
+                                        multiple
                                         onChange={(event) =>
-                                            setImportFile(event.target.files?.[0] ?? null)
+                                            setImportFiles(Array.from(event.target.files ?? []))
                                         }
                                         className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-[#25A7CA]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#117a98] hover:file:bg-[#25A7CA]/15"
                                     />
                                 </Field>
 
+                                {importFiles.length ? (
+                                    <div className="rounded-2xl border border-[#25A7CA]/20 bg-[#25A7CA]/5 px-4 py-3 text-sm text-[#117a98]">
+                                        {`${importFiles.length} ${
+                                            importFiles.length === 1
+                                                ? "archivo listo"
+                                                : "archivos listos"
+                                        } para importar en tandas seguras de hasta ${EXCEL_IMPORT_BATCH_SIZE}.`}
+                                    </div>
+                                ) : null}
+
                                 <Field
                                     label="Imágenes de productos por código"
-                                    hint="Seleccioná todas las fotos juntas. El orden no importa: cada nombre se normaliza sin puntos, guiones ni espacios y se compara contra el código del producto. Si no hay match, queda el placeholder de su marca."
+                                    hint="Seleccioná todas las fotos juntas. Se intenta SKU exacto, código numérico único y alias Furcon con barra. Sin match seguro no se guarda ni reemplaza ninguna imagen."
                                 >
                                     <input
                                         type="file"
@@ -2865,8 +2929,12 @@ export default function ProductsIndex({
                                 <div className="mt-4 space-y-4 text-sm leading-6 text-slate-600">
                                     <p>
                                         Columnas mínimas: familia, rubro,
-                                        descripción, marca, modelo, código NM,
-                                        código equivalente y código OEM.
+                                        descripción, tipo, marca, modelo, código
+                                        NM, código equivalente y código OEM.
+                                    </p>
+                                    <p>
+                                        En `tipo` elegí `Alternativo` para productos
+                                        Nicolais o `Importado` para las demás marcas.
                                     </p>
                                     <p>
                                         Marca y modelo corresponden al vehículo.
@@ -2882,10 +2950,6 @@ export default function ProductsIndex({
                                         Podés bajar la base completa para revisar
                                         todo y usar el template para sumar nuevos
                                         productos.
-                                    </p>
-                                    <p>
-                                        `spec_tables_json` acepta un array JSON con
-                                        tablas, columnas y filas.
                                     </p>
                                 </div>
                             </aside>

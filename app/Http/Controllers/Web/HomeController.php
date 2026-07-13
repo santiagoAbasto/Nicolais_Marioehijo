@@ -35,6 +35,13 @@ class HomeController extends Controller
                 ->get();
             $brands = ProductVehicleOptions::brands();
             $models = ProductVehicleOptions::models();
+            $productBrands = Product::query()
+                ->whereNotNull('brand')
+                ->where('brand', '!=', '')
+                ->whereRaw("LOWER(TRIM(brand)) NOT IN ('importado', 'alternativo')")
+                ->distinct()
+                ->orderBy('brand')
+                ->pluck('brand');
             $rubros = Product::query()
                 ->whereNotNull('rubro')
                 ->where('rubro', '!=', '')
@@ -45,6 +52,7 @@ class HomeController extends Controller
             $families = collect();
             $brands = collect();
             $models = collect();
+            $productBrands = collect();
             $rubros = collect();
         }
 
@@ -98,6 +106,7 @@ class HomeController extends Controller
             'families' => $families,
             'brands' => $brands,
             'models' => $models,
+            'productBrands' => $productBrands,
             'rubros' => $rubros,
             'aboutSection' => $aboutSection,
             'featuredProducts' => $featuredProducts,
