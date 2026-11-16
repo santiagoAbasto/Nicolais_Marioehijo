@@ -15,17 +15,17 @@
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 📑 Contenido
+## <img src="docs/readme/ic-indice.svg" width="24" height="24" alt=""> Contenido
 
 [El problema](#-el-problema) · [La solución](#-la-solución) · [Funcionalidades](#-funcionalidades) · [Arquitectura](#-arquitectura) · [Flujos de trabajo](#-flujos-de-trabajo) · [Modelo de datos](#-modelo-de-datos) · [Criterios y decisiones](#-criterios-y-decisiones) · [Stack](#-stack) · [Estructura](#-estructura-del-repo) · [Puesta en marcha](#-puesta-en-marcha) · [Pruebas y calidad](#-pruebas-y-calidad) · [Despliegue](#-despliegue) · [Estado y pendientes](#-estado-y-pendientes) · [Licencia y autoría](#-licencia-y-autoría)
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🧩 El problema
+## <img src="docs/readme/ic-problema.svg" width="24" height="24" alt=""> El problema
 
 La empresa maneja un catálogo técnico amplio: familias, líneas, series, grados, formas, normas y composición química. Esa información vivía dispersa en planillas y documentos, y las consultas de clientes (precios, stock, presupuestos, pagos) llegaban por canales separados. Calcular el peso de una pieza y verificar una norma eran pasos manuales.
 
-## 💡 La solución
+## <img src="docs/readme/ic-solucion.svg" width="24" height="24" alt=""> La solución
 
 **Nicolais Mario e Hijo** es una aplicación Laravel con tres perfiles:
 
@@ -35,7 +35,7 @@ La empresa maneja un catálogo técnico amplio: familias, líneas, series, grado
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## ✨ Funcionalidades
+## <img src="docs/readme/ic-funcionalidades.svg" width="24" height="24" alt=""> Funcionalidades
 
 **Sitio público** (rol: visitante)
 - Catálogo por familias, líneas, series, grados, formas, variantes, normas y composición química.
@@ -56,7 +56,7 @@ La empresa maneja un catálogo técnico amplio: familias, líneas, series, grado
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🏗️ Arquitectura
+## <img src="docs/readme/ic-arquitectura.svg" width="24" height="24" alt=""> Arquitectura
 
 Monolito modular con Laravel y Eloquent. Las rutas públicas y de cliente se renderizan con Blade y JavaScript progresivo; el panel usa React con Inertia, sin una API pública separada. La lógica de importación y normalización vive en `app/Services`; controladores, Form Requests y middlewares coordinan HTTP, validación y seguridad.
 
@@ -83,7 +83,7 @@ flowchart LR
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🔄 Flujos de trabajo
+## <img src="docs/readme/ic-flujos.svg" width="24" height="24" alt=""> Flujos de trabajo
 
 **Acceso de un cliente a la zona privada**
 
@@ -133,7 +133,7 @@ sequenceDiagram
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🗃️ Modelo de datos
+## <img src="docs/readme/ic-datos.svg" width="24" height="24" alt=""> Modelo de datos
 
 Eloquent con 65 migraciones y 48 modelos en el repositorio. Cuatro áreas principales:
 
@@ -167,7 +167,7 @@ El catálogo técnico (grados, normas, formas) y la calculadora de peso tienen s
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🧭 Criterios y decisiones
+## <img src="docs/readme/ic-criterios.svg" width="24" height="24" alt=""> Criterios y decisiones
 
 - **Acceso por aprobación.** La zona cliente no se abre sin una solicitud aprobada, asociada a su usuario.
 - **Importación en pasos.** Previsualizar, validar, mapear y publicar evita cargar un archivo malo al catálogo.
@@ -182,7 +182,7 @@ El catálogo técnico (grados, normas, formas) y la calculadora de peso tienen s
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🧱 Stack
+## <img src="docs/readme/ic-stack.svg" width="24" height="24" alt=""> Stack
 
 | Capa | Tecnología | Versión |
 | --- | --- | --- |
@@ -200,7 +200,7 @@ El catálogo técnico (grados, normas, formas) y la calculadora de peso tienen s
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🗂️ Estructura del repo
+## <img src="docs/readme/ic-estructura.svg" width="24" height="24" alt=""> Estructura del repo
 
 ```text
 app/Http/Controllers/    sitio, zona cliente, panel y endpoints JSON internos
@@ -219,7 +219,7 @@ docs/readme/             recursos visuales del README
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🚀 Puesta en marcha
+## <img src="docs/readme/ic-arranque.svg" width="24" height="24" alt=""> Puesta en marcha
 
 Requisitos: PHP 8.3+, Composer, Node.js, npm y MySQL.
 
@@ -237,7 +237,7 @@ Variables relevantes (por nombre): `DB_*`, `MAIL_*`, `QUEUE_CONNECTION`, `FILESY
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🧪 Pruebas y calidad
+## <img src="docs/readme/ic-pruebas.svg" width="24" height="24" alt=""> Pruebas y calidad
 
 Pruebas Feature sobre catálogo, normas, stock, búsqueda, SEO, infraestructura, productos destacados y zona cliente. La suite usa SQLite, caché y sesión en memoria, correo simulado y colas síncronas.
 
@@ -253,13 +253,13 @@ La última verificación registrada en el README anterior fue de 85 pruebas y 44
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🚢 Despliegue
+## <img src="docs/readme/ic-despliegue.svg" width="24" height="24" alt=""> Despliegue
 
 Documentado como despliegue Laravel: Composer, build de Vite, migraciones, enlace de storage y cachés, con `composer dev` para desarrollo. No hay infraestructura como código ni pipeline CI/CD. El servidor web, proveedor, backups y proceso de publicación quedan fuera del repositorio.
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 📌 Estado y pendientes
+## <img src="docs/readme/ic-estado.svg" width="24" height="24" alt=""> Estado y pendientes
 
 - **Estado:** aplicación funcional con catálogo, zona cliente, importaciones, PDF y panel. Producción no verificada.
 - **Último commit:** 2026-07-12, `VERSION 1.1.2`, en el historial local.
@@ -270,7 +270,7 @@ Documentado como despliegue Laravel: Composer, build de Vite, migraciones, enlac
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 📄 Licencia y autoría
+## <img src="docs/readme/ic-licencia.svg" width="24" height="24" alt=""> Licencia y autoría
 
 Desarrollado por el **Ing. Santiago Abasto**.
 
